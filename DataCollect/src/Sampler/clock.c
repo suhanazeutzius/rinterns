@@ -7,26 +7,35 @@
  * @param struct bladerf *slave_dev -- slave device
  * @return int -- return 0 on success, bladerf error code on failure
  *
- * @brief master device will output a 38.4MHz reference clock on the SMB
- * port, and the slave device will expect a 38.4MHz reference clock on its
- * SMB input port
+ * @brief initialize clock reference and clock sharing between master/slave
+ * and initialize 10MHz reference
  **/
 int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
 	int status;
 
-	/* configure master clock output (auto frequency=38.4MHz) */
-	status = bladerf_set_smb_mode(master_dev, BLADERF_SMB_MODE_OUTPUT);
-	if(status != 0){
-		fprintf(stderr, "Failed to set master device SMB output: %s\n", bladerf_strerror(status));
-		return status;
-	}
+    /* set onboard reference for master */
 
-	/* configure slave clock input */
-	bladerf_set_smb_mode(slave_dev, BLADERF_SMB_MODE_INPUT);
-	if(status != 0){
-		fprintf(stderr, "Failed to set slave device SMB input: %s\n", bladerf_strerror(status));
-		return status;
-	}
+    status = bladerf_set_clock_select(master_dev, CLOCK_SELECT_ONBOARD);
+    if(status != 0){
+        fprintf(stderr, "Failed to set onboard reference on master: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    /* set offboard reference for slave */
+
+    status = bladerf_set_clock_select(slave_dev, CLOCK_SELECT_EXTERNAL);
+    if(status != 0){
+        fprintf(stderr, "Failed to set offboard reference on slave: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    /* set master clock output */
+
+    status = bladerf_set_clock_output(slave_dev, true);
+    if(status != 0){
+        fprintf(stderr, "Failed to enable output clock on master: %s\n", bladerf_strerror(status));
+        return status;
+    }
 
 	return 0;
 }

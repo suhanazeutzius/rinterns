@@ -19,7 +19,7 @@ int channel_init(struct bladerf *dev, struct channel_config ch_config){
     status = bladerf_set_gain_mode(dev, BLADERF_CHANNEL_RX(0), ch_config.gainmode);
     if(status != 0){
         fprintf(stderr, "Failed to set gain mode on ch0: %s\n", bladerf_strerror(status));
-        return status
+        return status;
     }
 
     status = bladerf_set_gain_mode(dev, BLADERF_CHANNEL_RX(1), ch_config.gainmode);
@@ -29,18 +29,21 @@ int channel_init(struct bladerf *dev, struct channel_config ch_config){
     }
 
 
-    /* set gain value */
+    /* set gain value (if manual gain mode selected) */
 
-    status = bladerf_set_gain(dev, BLADERF_CHANNEL_RX(0), ch_config.gain);
-    if(status != 0){
-        fprintf(stderr, "Failed to set gain on ch0: %s\n", bladerf_strerror(status));
-        return status;
-    }
+    if(ch_config.gainmode == BLADERF_GAIN_MGC){
 
-    status = bladerf_set_gain(dev, BLADERF_CHANNEL_RX(1), ch_config.gain);
-    if(status != 0){
-        fprintf(stderr, "Failed to set gain on ch1: %s\n", bladerf_strerror(status));
-        return status;
+        status = bladerf_set_gain(dev, BLADERF_CHANNEL_RX(0), ch_config.gain);
+        if(status != 0){
+            fprintf(stderr, "Failed to set gain on ch0: %s\n", bladerf_strerror(status));
+            return status;
+        }
+
+        status = bladerf_set_gain(dev, BLADERF_CHANNEL_RX(1), ch_config.gain);
+        if(status != 0){
+            fprintf(stderr, "Failed to set gain on ch1: %s\n", bladerf_strerror(status));
+            return status;
+        }
     }
 
     /* set sample rate */
@@ -144,7 +147,7 @@ int channel_deinit(struct bladerf *dev){
 
     status = bladerf_enable_module(dev, BLADERF_CHANNEL_RX(0), false);
     if(status != 0){
-        fprintf(stderr, "Failed to disable ch0: %s\n", bladerf_srerror(status));
+        fprintf(stderr, "Failed to disable ch0: %s\n", bladerf_strerror(status));
         return status;
     }
 
@@ -152,7 +155,7 @@ int channel_deinit(struct bladerf *dev){
 
     status = bladerf_enable_module(dev, BLADERF_CHANNEL_RX(1), false);
     if(status != 0){
-        fprintf(stderr, "Failed to disable ch1: %s\n", bladerf_srerror(status));
+        fprintf(stderr, "Failed to disable ch1: %s\n", bladerf_strerror(status));
         return status;
     }
 

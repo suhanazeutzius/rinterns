@@ -19,7 +19,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
 
     /* configure sync stream (master) */
 
-    status = bladerf_sync_config(master_dev, BLADERF_RX_X2, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.tieout_ms);
+    status = bladerf_sync_config(master_dev, BLADERF_RX_X2, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
     if(status != 0){
         fprintf(stderr, "Failed to configure master stream: %s\n", bladerf_strerror(status));
         return status;
@@ -68,7 +68,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
         master_buffer = NULL;
         slave_buffer = NULL;
 
-        fprintf(stderr, "Failed to allocate slave buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEMN));
+        fprintf(stderr, "Failed to allocate slave buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
 

@@ -1,16 +1,16 @@
 #ifndef _SYNCSTREAM_H_
 #define _SYNCSTREAM_H_
 
-#include <libbbladeRF.h>
+#include <libbladeRF.h>
 #include <stdio.h>
 #include "channel.h"
 
 struct stream_config{
-    unsigned int num_samples,
-    unsigned int num_buffers,
-    unsigned int buffer_size,
-    unsigned int num_transfers,
-    unsigned int timeout_ms,
+    unsigned int num_samples;
+    unsigned int num_buffers;
+    unsigned int buffer_size;
+    unsigned int num_transfers;
+    unsigned int timeout_ms;
 };
 
 int16_t *master_buffer;

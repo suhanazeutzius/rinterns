@@ -31,7 +31,7 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 
 	/* initialize triggers */
 
-	bladerf_trigger master_trig, slave_trig;
+	struct bladerf_trigger master_trig, slave_trig;
 	status = trigger_init(master_dev, slave_dev, &master_trig, &slave_trig);
 	if(status != 0) return status;
 
