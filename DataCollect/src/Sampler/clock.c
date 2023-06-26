@@ -21,6 +21,15 @@ int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
         return status;
     }
 
+
+    /* set master clock output */
+
+    status = bladerf_set_clock_output(slave_dev, true);
+    if(status != 0){
+        fprintf(stderr, "Failed to enable output clock on master: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
     /* set offboard reference for slave */
 
     status = bladerf_set_clock_select(slave_dev, CLOCK_SELECT_EXTERNAL);
@@ -33,14 +42,6 @@ int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
     status = bladerf_set_clock_output(master_dev, false);
     if(status != 0){
         fprintf(stderr, "Failed to disable output clock on slave: %s\n", bladerf_strerror(status));
-        return status;
-    }
-
-    /* set master clock output */
-
-    status = bladerf_set_clock_output(slave_dev, true);
-    if(status != 0){
-        fprintf(stderr, "Failed to enable output clock on master: %s\n", bladerf_strerror(status));
         return status;
     }
 

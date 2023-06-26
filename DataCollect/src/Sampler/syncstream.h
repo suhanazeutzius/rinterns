@@ -13,8 +13,8 @@ struct stream_config{
     unsigned int timeout_ms;
 };
 
-int16_t *master_buffer;
-int16_t *slave_buffer;
+static int16_t *master_buffer = NULL;
+static int16_t *slave_buffer = NULL;
 
 int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config);
 int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev);

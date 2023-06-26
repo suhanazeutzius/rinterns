@@ -119,5 +119,36 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
  * @brief recieves from the master and slave buffers and appends to a CSV
  **/
 int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
-    /**********************TODO*******************************/
+
+    /* check buffers */
+
+    if(!master_buffer || !slave_buffer){
+        fprintf(stderr, "master/slave Rx Buffers are NULL\n");
+        return BLADERF_ERR_MEM;
+    }
+
+    /* open file */
+    
+    FILE *fptr = fopen("sample.csv", "a");
+    if(!fptr) return -1;
+
+    int num_reads;
+    if(sizeof(master_buffer)/sizeof(int16_t) > sizeof(slave_buffer)/sizeof(int16_t)){
+        num_reads = sizeof(slave_buffer)/sizeof(int16_t);
+    }
+    else{
+        num_reads = sizeof(master_buffer)/sizeof(int16_t);
+    }
+
+    for(int i = 0; i < num_reads-3; i+=4){
+        fprintf(fptr, "%d, %d, %d, %d, %d, %d, %d, %d\n", master_buffer[i], master_buffer[i+1], master_buffer[i+2], master_buffer[i+3], slave_buffer[i], slave_buffer[i+1], slave_buffer[i+2], slave_buffer[i+3]);
+}
+
+    fclose(fptr);
+    free(master_buffer);
+    free(slave_buffer);
+    master_buffer = NULL;
+    slave_buffer = NULL;
+
+    return 0;
 }
