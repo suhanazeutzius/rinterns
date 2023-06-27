@@ -58,19 +58,24 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
 
     master_buffer = (int16_t*)malloc(st_config.num_samples * 2 * 1 * sizeof(int16_t));
     if(!master_buffer){
+        master_buffer_len = 0;
         fprintf(stderr, "Failed to allocate master buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
+    master_buffer_len = st_config.num_samples * 2 * 1 * sizeof(int16_t);
 
     slave_buffer = (int16_t*)malloc(st_config.num_samples * 2 * 1 * sizeof(int16_t));
     if(!slave_buffer){
         free(master_buffer);
         master_buffer = NULL;
+        master_buffer_len = 0;
         slave_buffer = NULL;
+        slave_buffer_len = 0;
 
         fprintf(stderr, "Failed to allocate slave buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
+    slave_buffer_len = st_config.num_samples * 2 * 1 * sizeof(int16_t);
 
     /* start stream recieve (master) */
 
@@ -133,11 +138,11 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
     if(!fptr) return -1;
 
     int num_reads;
-    if(sizeof(master_buffer)/sizeof(int16_t) > sizeof(slave_buffer)/sizeof(int16_t)){
-        num_reads = sizeof(slave_buffer)/sizeof(int16_t);
+    if(master_buffer_len > slave_buffer_len){
+        num_reads = slave_buffer_len;
     }
     else{
-        num_reads = sizeof(master_buffer)/sizeof(int16_t);
+        num_reads = master_buffer_len;
     }
 
     for(int i = 0; i < num_reads-3; i+=4){
@@ -149,6 +154,8 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
     free(slave_buffer);
     master_buffer = NULL;
     slave_buffer = NULL;
+    master_buffer_len = 0;
+    slave_buffer_len = 0;
 
     return 0;
 }

@@ -57,14 +57,14 @@ int main(){
     struct bladerf *dev1, *dev2;
 
     printf("[dev1] Opening device...\n");
-    status = bladerf_open(&dev1, DEVICE1_ID);
+    status = bladerf_open(&dev1, MASTER_ID);
     if(status != 0){
         printf("[dev1] Failed to open.\n");
         return -1;
     }
 
     printf("[dev2] Opening device...\n");
-    status = bladerf_open(&dev2, DEVICE2_ID);
+    status = bladerf_open(&dev2, SLAVE_ID);
     if(status != 0){
         bladerf_close(dev1);
         printf("[dev2] Failed to open.\n");

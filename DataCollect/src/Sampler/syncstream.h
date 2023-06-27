@@ -14,7 +14,9 @@ struct stream_config{
 };
 
 static int16_t *master_buffer = NULL;
+static unsigned int master_buffer_len = 0;
 static int16_t *slave_buffer = NULL;
+static unsigned int slave_buffer_len = 0;
 
 int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config);
 int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev);

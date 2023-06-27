@@ -13,14 +13,14 @@ int main(){
     struct bladerf *dev1, *dev2;
 
     printf("[dev1] Opening device...\n");
-    status = bladerf_open(&dev1, DEVICE1_ID);
+    status = bladerf_open(&dev1, MASTER_ID);
     if(status != 0){
         fprintf(stderr, "Failed to open device1: %s\n", bladerf_strerror(status));
         return -1;
     }
 
     printf("[dev2] Opening device...\n");
-    status = bladerf_open(&dev2, DEVICE2_ID);
+    status = bladerf_open(&dev2, SLAVE_ID);
     if(status != 0){
         bladerf_close(dev1);
         fprintf(stderr, "Failed to open device2: %s\n", bladerf_strerror(status));
@@ -50,6 +50,7 @@ int main(){
     /* configure streams */
 
     struct stream_config st_config;
+    st_config.num_samples = 307200;
     st_config.num_buffers = 16;
     st_config.buffer_size = 2048;
     st_config.num_transfers = 8;
