@@ -21,11 +21,10 @@ from flatirons.gps_gen import *
 #                  data bit = 0
 #   corr1        : correlation coefficient vector when   [numpy array of type float]
 #                  data bit = 1
-def correlateWithGPS(prn, signal, sample_ratio, signal_name, plot=False):
+def correlateWithGPS(prn, signal, sample_ratio, signal_name, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
-    ca0 = makeGPSClean(prn, 0,  sample_ratio, num_periods=10)
-    #ca0 = ca0[0:int(len(ca0)/2)]
-    ca1 = makeGPSClean(prn, 1,  sample_ratio, num_periods=10)
+    ca0 = makeGPSClean(prn, 0,  sample_ratio, sample_rate=sample_rate)
+    ca1 = makeGPSClean(prn, 1,  sample_ratio, sample_rate=sample_rate)
     #ca1 = ca1[0:int(len(ca1)/2)]
 
     # Perform correlation
@@ -119,45 +118,49 @@ def tuneSignal(fcenter_SDR, fsample, signal, filter_bandwidth=0.5e6):
     # Return signal
     return signal
 
-def correlateSignal(signal, fsample, signal_name, prns=range(1,32), plot=False):
+def correlateSignal(signal, fsample, signal_name, sample_rate=None, prns=range(1,32), plot=False):
     # Instantiate empty vectors
-    corr0_ratio = []
-    corr1_ratio = []
+    corr0_max = []
+    corr1_max = []
 
     # Calculate ratio of SDR sampling rate to GPS chip rate
     sample_ratio = int(fsample/(1.023e6))
 
+    # Update sample_rate variable
+    if fsample == 1.023e6:
+        sample_rate = None
+    else:
+        sample_rate = fsample
+
     # Iterate over all prns
     for prn in prns:
         # Correlate signal with C/A code corresponding to current prn
-        corr0, corr1 = correlateWithGPS(prn, signal, sample_ratio, signal_name, plot=plot)
+        corr0, corr1 = correlateWithGPS(prn, signal, sample_ratio, signal_name, sample_rate=sample_rate, plot=plot)
     
         # Save max correlation coefficients
-        corr0_ratio.append(corr0.max())
-        #corr0_ratio.append(np.abs(np.real(corr0.max() / np.median(corr0))))
-        corr1_ratio.append(corr1.max())
-        #corr1_ratio.append(np.abs(np.real(corr1.max() / np.median(corr1))))
+        corr0_max.append(corr0.max())
+        corr1_max.append(corr1.max())
 
-    # Calculate max max/median ratio
-    max_ratio = max([max(corr0_ratio), max(corr1_ratio)])
+    # Calculate maximum correlation coefficients
+    max_corr = max([max(corr0_max), max(corr1_max)])
 
     # Plot results
     barWidth = 0.33
-    br0 = np.arange(len(corr0_ratio))
+    br0 = np.arange(len(corr0_max))
     br1 = [x + barWidth for x in br0]
-    plt.bar(br0, corr0_ratio, width=barWidth, label='Data Bit = 0')
-    plt.text(1, max_ratio+(max_ratio/100), 'Maximum Correlation = ' + str(round(max_ratio,1)))
-    plt.bar(br1, corr1_ratio, width=barWidth, label='Data Bit = 1')
-    plt.axhline(y=max_ratio, color='k', linestyle='--')
+    plt.bar(br0, corr0_max, width=barWidth, label='Data Bit = 0')
+    plt.text(1, max_corr+(max_corr/100), 'Maximum Correlation = ' + str(round(max_corr,1)))
+    plt.bar(br1, corr1_max, width=barWidth, label='Data Bit = 1')
+    plt.axhline(y=max_corr, color='k', linestyle='--')
     plt.xlabel('PRN')
     plt.ylabel('Maximum Correlation Coefficient')
     plt.title('Correlation Between ' + signal_name + ' and Various PRNs')
-    plt.xticks([r+(barWidth/2) for r in range(len(corr0_ratio))], [str(prn) for prn in prns])
+    plt.xticks([r+(barWidth/2) for r in range(len(corr0_max))], [str(prn) for prn in prns])
     plt.legend()
     plt.show()
     
     # Return results
-    return [corr0_ratio, corr1_ratio]
+    return [corr0_max, corr1_max]
 
 # visualizeGPS() visualizes an input GPS signal
 #
