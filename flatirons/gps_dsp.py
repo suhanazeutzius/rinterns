@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.signal
 import matplotlib.pyplot as plt
+import math
 
 # Import custom packages
 from flatirons.gps_gen import *
@@ -102,23 +103,25 @@ def filterSignal(fcenter, fsample, signal, filter_type, bandwidth=2e6, order=4):
 #
 # Outputs:
 #   signal           : tuned signal                [numpy array of type np.complex_]
-def tuneSignal(fcenter_SDR, fsample, signal, filter_bandwidth=0.5e6):
-    # Define GPS frequency
-    fGPS = 1575.42e6 # [Hz] 
-
-    # Calculate current offset of GPS data
-    offset = (fGPS-fcenter_SDR) # [Hz]
-
+def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6, do_filtering=True):
     # Downshift signal to be centered at 0 Hz
-    signal = signal * np.exp(-(1j*2*np.pi*offset))
+    signal = signal * np.exp(-(1j*2*np.pi*fshift))
 
     # Pass filter through lowpass filter
-    signal = filterSignal(0, fsample, signal, ['butter', 'lowpass'], bandwidth=filter_bandwidth, order=3)
+    if do_filtering:
+        signal = filterSignal(0, fsample, signal, ['butter', 'lowpass'], bandwidth=filter_bandwidth, order=3)
 
     # Return signal
     return signal
 
-def correlateSignal(signal, fsample, signal_name, sample_rate=None, prns=range(1,32), plot=False):
+def correlateSignal(signal, fsample, signal_name, max_elevation_angle, freq_stop, sample_rate=None, prns=range(1,32), freq_range=None, plot=False):
+    # Define constants
+    c = 299792458 # [m/s]
+    fGPS = 1575.42e6 # [Hz]
+    Rearth = 6378e3 # [m]
+    hGPS = 20200e3 # [m]
+    Vsat = (14000e3)/60/60 # [m/s]
+
     # Instantiate empty vectors
     corr0_max = []
     corr1_max = []
@@ -132,14 +135,29 @@ def correlateSignal(signal, fsample, signal_name, sample_rate=None, prns=range(1
     else:
         sample_rate = fsample
 
+    # Calculate maximum doppler shift
+    Rgps = Rearth + hGPS # [m]
+    Rsat = np.sqrt((Rearth**2)+(Rgps**2)-(2*Rearth*Rgps*np.cos(max_elevation_angle))) # [m]
+    alpha = math.pi-np.arcsin(np.sin(max_elevation_angle)*Rgps/Rsat) # [rad]
+    slant_angle = alpha-(math.pi/2)
+    fdoppler = np.floor(2*Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
+
+    # Define doppler frequency shift range
+    if freq_range is None:
+        freq_range = np.arange(-fdoppler, fdoppler, freq_step)
+
     # Iterate over all prns
     for prn in prns:
-        # Correlate signal with C/A code corresponding to current prn
-        corr0, corr1 = correlateWithGPS(prn, signal, sample_ratio, signal_name, sample_rate=sample_rate, plot=plot)
-    
-        # Save max correlation coefficients
-        corr0_max.append(corr0.max())
-        corr1_max.append(corr1.max())
+        for freq in freq_range
+            # Shift signal by frequency
+            signal_shifted = tuneSignal(-freq, None, None, do_filtering=False) 
+
+            # Correlate signal with C/A code corresponding to current prn
+            corr0, corr1 = correlateWithGPS(prn, signal_shifted, sample_ratio, signal_name, sample_rate=sample_rate, plot=plot)
+            
+            # Save max correlation coefficients
+            corr0_max.append(corr0.max())
+            corr1_max.append(corr1.max())
 
     # Calculate maximum correlation coefficients
     max_corr = max([max(corr0_max), max(corr1_max)])

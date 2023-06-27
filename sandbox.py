@@ -35,7 +35,7 @@ signal = makeGPSNoisy(signal, noise_power_AWGN)
 ##signal = filterSignal((fGPS-fcenter_SDR), fsample, signal, ['fir', 'bandpass'], bandwidth=2e6, order=100)
 ##visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
 #
-#signal = tuneSignal(fcenter_SDR, fsample, signal)
+#signal = tuneSignal(fGPS-fcenter_SDR, fsample, signal)
 ##visualizeGPS(signal, fGPS, fsample, 'Signal 1')
 #
 #signal = scipy.signal.decimate(signal, 30)
@@ -50,7 +50,7 @@ signal = makeGPSNoisy(signal, noise_power_AWGN)
 #signal = filterSignal((fGPS-fcenter_SDR), fsample, signal, ['fir', 'bandpass'], bandwidth=2e6, order=100)
 #visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
 #
-#signal = tuneSignal(fcenter_SDR, fsample, signal)
+#signal = tuneSignal(fGPS-fcenter_SDR, fsample, signal)
 #visualizeGPS(signal, fGPS, fsample, 'Signal 1')
 #
 #signal = scipy.signal.decimate(signal, 30)
@@ -58,4 +58,4 @@ signal = makeGPSNoisy(signal, noise_power_AWGN)
 #signal = np.fromfile(open('data/Samples_Jun_26/sample_data_decimated_6_but_maybe_30'), dtype=np.complex64)
 
 prns = range(1,32)
-[corr0, corr1] = correlateSignal(signal, fsample, 'Signal 1', sample_rate=fsample, prns=prns)
+[corr0, corr1] = correlateSignal(signal, fsample, 'Signal 1', np.deg2rad(26.3), sample_rate=fsample, prns=prns)
