@@ -1,4 +1,4 @@
-# Import required python packages
+# Imort required python packages
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,9 +16,9 @@ from flatirons.prn_gen import *
 #
 # Outputs:
 #   signal       : simulated ideal GPS signal   [numpy array of type np.complex_]
-def makeGPSClean(prn, data_bit, sample_ratio, num_periods=2):
+def makeGPSClean(prn, data_bit, sample_ratio, num_periods=1, sample_rate=None):
     # Generate PRN (C/A) code
-    ca = cacode(prn)
+    ca = cacode(prn, sample_rate=sample_rate)
 
     # Convert PRN code to 0s and 1s
     ca = (ca > 0).astype(int)
