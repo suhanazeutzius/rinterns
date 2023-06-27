@@ -1,86 +1,234 @@
 #include <libbladeRF.h>
 #include <stdio.h>
-#include <assert.h>
 #include "bladedevice.h"
 #include "channel.h"
 
 
-void test_channel_init(struct bladerf *dev, struct channel_config ch_config){
+int test_channel_init(struct bladerf *dev, struct channel_config ch_config){
+
+    int status;
 
     /* check function return */
 
-    assert(channel_init(dev, ch_config) == 0);
+    status = channel_init(dev, ch_config);
+    if(status != 0){
+        fprintf(stderr, "Failed to initialize channels: %s\n", bladerf_strerror(status));
+        return status;
+    }
 
-    /* gain mode */
+    /* gain mode ch0 */
 
     bladerf_gain_mode mode;
-    bladerf_get_gain_mode(dev, BLADERF_CHANNEL_RX(0), &mode);
-    assert(mode == ch_config.gainmode);
+    status = bladerf_get_gain_mode(dev, BLADERF_CHANNEL_RX(0), &mode);
     
-    bladerf_get_gain_mode(dev, BLADERF_CHANNEL_RX(1), &mode);
-    assert(mode == ch_config.gainmode);
+    if(status != 0){
+        fprintf(stderr, "Failed to get gain mode on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(mode != ch_config.gainmode){
+        fprintf(stderr, "Gainmode does not match config on ch0\n");
+        return -1;
+    }
+    
+    /* gain mode ch1 */
+
+    status = bladerf_get_gain_mode(dev, BLADERF_CHANNEL_RX(1), &mode);
+    
+    if(status != 0){
+        fprintf(stderr, "Failed to get gainmode on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(mode != ch_config.gainmode){
+        fprintf(stderr, "Gainmode does not match config on ch1\n");
+        return -1;
+    }
 
     /* gain value */
 
     if(ch_config.gainmode == BLADERF_GAIN_MGC){
         bladerf_gain gain;
-        bladerf_get_gain(dev, BLADERF_CHANNEL_RX(0), &gain);
-        assert(gain == ch_config.gain);
+        status = bladerf_get_gain(dev, BLADERF_CHANNEL_RX(0), &gain);
         
-        bladerf_get_gain(dev, BLADERF_CHANNEL_RX(1), &gain);
-        assert(gain == ch_config.gain);
+        /* gain value ch0 */
+ 
+        if(status != 0){
+            fprintf(stderr, "Failed to get gain on ch0: %s\n", bladerf_strerror(status));
+            return  status;
+        }
+
+        if(gain != ch_config.gain){
+            fprintf(stderr, "Gain does not match config on ch0\n");
+            return -1;
+        }
+
+        /* gain value ch1 */
+
+        status = bladerf_get_gain(dev, BLADERF_CHANNEL_RX(1), &gain);
+        
+        if(status != 0){
+            fprintf(stderr, "Failed to get gain on ch1: %s\n", bladerf_strerror(status));
+            return status;
+        }
+
+        if(gain != ch_config.gain){
+            fprintf(stderr, "Gain does not match config on ch1\n");
+            return -1;
+        }
     }
 
-    /* sample rate */
+    /* sample rate ch0  */
 
     bladerf_sample_rate rate;
-    bladerf_get_sample_rate(dev, BLADERF_CHANNEL_RX(0), &rate);
-    assert(rate == ch_config.samplerate);
+    status = bladerf_get_sample_rate(dev, BLADERF_CHANNEL_RX(0), &rate);
 
-    bladerf_get_sample_rate(dev, BLADERF_CHANNEL_RX(1), &rate);
-    assert(rate == ch_config.samplerate);
+    if(status != 0){
+        fprintf(stderr, "Failed to get samplerate on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
 
-    /* bandwidth */
+    if(rate != ch_config.samplerate){
+        fprintf(stderr, "Samplerate does not match config on ch0\n");
+        return -1;
+    }
+
+    /* sample rate ch1  */
+
+    status = bladerf_get_sample_rate(dev, BLADERF_CHANNEL_RX(1), &rate);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to get samplerate on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(rate != ch_config.samplerate){
+        fprintf(stderr, "Samplerate does not match config on ch1\n");
+        return -1;
+    }
+
+    /* bandwidth ch0 */
 
     bladerf_bandwidth bandwidth;
-    bladerf_get_bandwidth(dev, BLADERF_CHANNEL_RX(0), &bandwidth);
-    assert(bandwidth == ch_config.bandwidth);
+    status = bladerf_get_bandwidth(dev, BLADERF_CHANNEL_RX(0), &bandwidth);
 
-    bladerf_get_bandwidth(dev, BLADERF_CHANNEL_RX(1), &bandwidth);
-    assert(bandwidth == ch_config.bandwidth);
+    if(status != 0){
+        fprintf(stderr, "Failed to get bandwidth on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
 
-    /* frequency */
+    if(bandwidth != ch_config.bandwidth){
+        fprintf(stderr, "Bandwidth does not match config on ch0\n");
+        return -1;
+    }
+
+    /* bandwidth ch1 */
+
+    status = bladerf_get_bandwidth(dev, BLADERF_CHANNEL_RX(1), &bandwidth);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to get bandwidth on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(bandwidth != ch_config.bandwidth){
+        fprintf(stderr, "Bandwidth does not match config on ch1\n");
+        return -1;
+    }
+
+    /* frequency ch0 */
 
     bladerf_frequency frequency;
-    bladerf_get_frequency(dev, BLADERF_CHANNEL_RX(0), &frequency);
-    assert(frequency == ch_config.frequency);
+    status = bladerf_get_frequency(dev, BLADERF_CHANNEL_RX(0), &frequency);
 
-    bladerf_get_frequency(dev, BLADERF_CHANNEL_RX(1), &frequency);
-    assert(frequency == ch_config.frequency);
+    if(status != 0){
+        fprintf(stderr, "Failed to get frequency on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
 
-    return;
+    if(frequency != ch_config.frequency){
+        fprintf(stderr, "Frequency does not match config on ch0\n");
+        return -1;
+    }
+
+    /* frequency ch1 */
+
+    status = bladerf_get_frequency(dev, BLADERF_CHANNEL_RX(1), &frequency);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to get frequency on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(frequency != ch_config.frequency){
+        fprintf(stderr, "Frequency does not match config on ch1\n");
+        return -1;
+    }
+
+    /* biastee ch0 */
+    
+    bool biastee;
+    status = bladerf_get_bias_tee(dev, BLADERF_CHANNEL_RX(0), &biastee);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to get biastee on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(biastee ^ ch_config.biastee){
+        fprintf(stderr, "Biastee does not match config on ch0\n");
+        return -1;
+    }
+
+    /* biastee ch1 */
+    
+    status = bladerf_get_bias_tee(dev, BLADERF_CHANNEL_RX(1), &biastee);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to get biastee on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    if(biastee ^ ch_config.biastee){
+        fprintf(stderr, "Biastee does not match config on ch1\n");
+        return -1;
+    }
+    
+    return 0;
 }
 
 
 
 
 
-void test_channel_enable(struct bladerf *dev){
+int test_channel_enable(struct bladerf *dev){
 
     /* check function return */
-    assert(channel_enable(dev) == 0);
-    return;
+
+    int status = channel_enable(dev);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to enable channels: %s\n", bladerf_strerror(status));
+        return status;
+    }
+    return 0;
 }
 
 
 
 
 
-void test_channel_deinit(struct bladerf *dev){
+int test_channel_deinit(struct bladerf *dev){
     
     /* check function return */
-    assert(channel_deinit(dev) == 0);
-    return;
+
+    int status = channel_deinit(dev);
+
+    if(status != 0){
+        fprintf(stderr, "Failed to deinit channels: %s\n", bladerf_strerror(status));
+        return status;
+    }
+    return 0;
 }
 
 
@@ -89,16 +237,26 @@ void test_channel_deinit(struct bladerf *dev){
 
 int main(){
 
+    int status;
+
     /* open devices */
      
     struct bladerf *dev1;
     struct bladerf *dev2;
     
     printf("[dev1] Opening device...\n");
-    assert(bladerf_open(&dev1, DEVICE1_ID) == 0);
+    status = bladerf_open(&dev1, MASTER_ID);
+    if(status != 0){
+        fprintf(stderr, "[dev1] Failed to open device: %s\n", bladerf_strerror(status));
+        return -1;
+    }
 
     printf("[dev2] Opening device...\n");
-    assert(bladerf_open(&dev2, DEVICE2_ID) == 0);
+    status = bladerf_open(&dev2, SLAVE_ID);
+    if(status != 0){
+        fprintf(stderr, "[dev2] Failed to open device: %s\n", bladerf_strerror(status));
+        return -1;
+    }
 
     /* test channel_init() */
 
@@ -108,30 +266,60 @@ int main(){
     ch_config.samplerate = 30690000;
     ch_config.bandwidth = 18000000;
     ch_config.frequency = 1567420000;
+    ch_config.biastee = true;
 
     printf("[dev1] Testing channel_init()...\n");
-    test_channel_init(dev1, ch_config);
+    if(test_channel_init(dev1, ch_config) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev1] Channel init failed\n");
+        return -1;
+    }
 
     printf("[dev2] Testing channel_init()...\n");
-    test_channel_init(dev2, ch_config);
+    if(test_channel_init(dev2, ch_config) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev2] Channel init failed\n");
+        return -1;
+    }
     
     /* test channel_enable() */
     
     printf("[dev1] Testing channel_enable()...\n");
-    test_channel_enable(dev1);
+    if(test_channel_enable(dev1) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev1] Channel enable failed\n");
+        return -1;
+    }
 
     printf("[dev2] Testing channel_enable()...\n");
-    test_channel_enable(dev2);
+    if(test_channel_enable(dev2) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev2] Channel enable failed\n");
+        return -1;
+    }
     
 
     /* test channel_deinit() */
 
     printf("[dev1] Testing channel_deinit()...\n");
-    test_channel_deinit(dev1);
+    if(test_channel_deinit(dev1) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev1] Channel enable failed\n");
+        return -1;
+    }
 
     printf("[dev2] Testing channel_deinit()...\n");
-    test_channel_deinit(dev2);
-
+    if(test_channel_deinit(dev2) != 0){
+        bladerf_close(dev1);
+        bladerf_close(dev2);
+        fprintf(stderr, "[dev2] Channel enable failed\n");
+        return -1;
+    }
 
     /* close devices */
 

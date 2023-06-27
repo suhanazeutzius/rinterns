@@ -88,6 +88,21 @@ int channel_init(struct bladerf *dev, struct channel_config ch_config){
         return status;
     }
 
+    /* set bias tee */
+
+    status = bladerf_set_bias_tee(dev, BLADERF_CHANNEL_RX(0), ch_config.biastee);
+    if(status != 0){
+        fprintf(stderr, "Failed to set biastee on ch0: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    status = bladerf_set_bias_tee(dev, BLADERF_CHANNEL_RX(1), ch_config.biastee);
+    if(status != 0){
+        fprintf(stderr, "Failed to set biastee on ch1: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+
     return 0;
 
 }

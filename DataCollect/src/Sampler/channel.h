@@ -10,6 +10,7 @@ struct channel_config{
     bladerf_sample_rate samplerate;
     bladerf_bandwidth bandwidth;
     bladerf_frequency frequency;
+    bool biastee;
 };
 
 int channel_init(struct bladerf *dev, struct channel_config ch_config);

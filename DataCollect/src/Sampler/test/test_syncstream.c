@@ -33,7 +33,8 @@ int main(){
     ch_config.gain = 0;
     ch_config.samplerate = 30690000;
     ch_config.bandwidth = 18000000;
-    ch_config.frequency = 1567420000;
+    ch_config.frequency = 905000000;
+    ch_config.biastee = true;
 
     printf("[dev1] Initializing channels\n");
     if(channel_init(dev1, ch_config)) goto exit_fail;
@@ -56,10 +57,10 @@ int main(){
     st_config.num_transfers = 8;
     st_config.timeout_ms = 3500;
 
-    printf("[dev1] Initializing syncstream...\n");
+    printf("[dev1, dev2] Initializing syncstream...\n");
     if(syncstream_init(dev1, dev2, st_config)) goto exit_fail;
 
-    printf("[dev2] Initializing syncstream...\n");
+    printf("[dev1, dev2] Handling syncstream...\n");
     if(syncstream_handle(dev1, dev2)) goto exit_fail;
 
     /* deinit channels */

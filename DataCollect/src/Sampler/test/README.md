@@ -8,7 +8,7 @@ Use Makefile commands to compile testers for each component individually. Most f
 
 - make channel
 - make clock
-- make trigger_oscope
+- make trigger
 - make trigger_syncstream
 - make syncstream
 - make sampler

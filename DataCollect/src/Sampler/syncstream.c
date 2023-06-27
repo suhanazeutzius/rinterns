@@ -1,4 +1,5 @@
 #include "syncstream.h"
+#include <inttypes.h>
 
 
 /**
@@ -47,35 +48,36 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
         fprintf(stderr, "Warning: allocating to non-null master buffer, data could be lost\n");
         free(master_buffer);
         master_buffer = NULL;
+        master_buffer_len = 0;
     }
     if(slave_buffer){
         fprintf(stderr, "Warning: allocating to non-null slave buffer, data could be lost\n");
         free(slave_buffer);
         slave_buffer = NULL;
+        master_buffer_len = 0;
     }
 
     /* allocate master/slave buffers */
+    const unsigned int buf_size = st_config.num_samples * 2 * 2 * sizeof(int16_t);
 
-    master_buffer = (int16_t*)malloc(st_config.num_samples * 2 * 1 * sizeof(int16_t));
+    master_buffer = (int16_t*)malloc(buf_size);
     if(!master_buffer){
-        master_buffer_len = 0;
         fprintf(stderr, "Failed to allocate master buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
-    master_buffer_len = st_config.num_samples * 2 * 1 * sizeof(int16_t);
+    master_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
 
-    slave_buffer = (int16_t*)malloc(st_config.num_samples * 2 * 1 * sizeof(int16_t));
+    slave_buffer = (int16_t*)malloc(buf_size);
     if(!slave_buffer){
         free(master_buffer);
         master_buffer = NULL;
         master_buffer_len = 0;
         slave_buffer = NULL;
-        slave_buffer_len = 0;
 
         fprintf(stderr, "Failed to allocate slave buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
-    slave_buffer_len = st_config.num_samples * 2 * 1 * sizeof(int16_t);
+    slave_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
 
     /* start stream recieve (master) */
 
@@ -83,9 +85,11 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
     if(status != 0){
         free(slave_buffer);
         slave_buffer = NULL;
+        slave_buffer_len = 0;
 
         free(master_buffer);
         master_buffer = NULL;
+        master_buffer_len = 0;
 
         fprintf(stderr, "Failed to start master sync rx stream (memory freed): %s\n", bladerf_strerror(status));
         return status;
@@ -97,9 +101,11 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
     if(status != 0){
         free(slave_buffer);
         slave_buffer = NULL;
+        slave_buffer_len = 0;
 
         free(master_buffer);
         master_buffer = NULL;
+        slave_buffer_len = 0;
 
         fprintf(stderr, "Failed to start slave sync rx stream (memory freed): %s\n", bladerf_strerror(status));
         return status;
@@ -137,7 +143,9 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
     FILE *fptr = fopen("sample.csv", "a");
     if(!fptr) return -1;
 
-    int num_reads;
+    /* get number of buffer samples */
+
+    unsigned int num_reads;
     if(master_buffer_len > slave_buffer_len){
         num_reads = slave_buffer_len;
     }
@@ -145,9 +153,11 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
         num_reads = master_buffer_len;
     }
 
-    for(int i = 0; i < num_reads-3; i+=4){
+    for(unsigned int i = 0; i < num_reads-3; i+=4){
         fprintf(fptr, "%d, %d, %d, %d, %d, %d, %d, %d\n", master_buffer[i], master_buffer[i+1], master_buffer[i+2], master_buffer[i+3], slave_buffer[i], slave_buffer[i+1], slave_buffer[i+2], slave_buffer[i+3]);
 }
+
+    /* free memory */
 
     fclose(fptr);
     free(master_buffer);

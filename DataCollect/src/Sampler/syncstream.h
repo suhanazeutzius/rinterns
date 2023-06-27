@@ -3,6 +3,7 @@
 
 #include <libbladeRF.h>
 #include <stdio.h>
+#include <malloc.h>
 #include "channel.h"
 
 struct stream_config{
