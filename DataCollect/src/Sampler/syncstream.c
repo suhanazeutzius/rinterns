@@ -1,5 +1,4 @@
 #include "syncstream.h"
-#include <inttypes.h>
 
 
 /**
@@ -81,7 +80,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
 
     /* start stream recieve (master) */
 
-    status = bladerf_sync_rx(master_dev, master_buffer, st_config.num_samples, NULL, st_config.timeout_ms);
+    status = bladerf_sync_rx(master_dev, master_buffer, st_config.num_samples * 2, NULL, st_config.timeout_ms);
     if(status != 0){
         free(slave_buffer);
         slave_buffer = NULL;
@@ -97,7 +96,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
     
     /* start stream recieve (slave) */
 
-    status = bladerf_sync_rx(slave_dev, slave_buffer, st_config.num_samples, NULL, st_config.timeout_ms);
+    status = bladerf_sync_rx(slave_dev, slave_buffer, st_config.num_samples * 2, NULL, st_config.timeout_ms);
     if(status != 0){
         free(slave_buffer);
         slave_buffer = NULL;
@@ -121,7 +120,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
 
 
 /**
- * handle a sync stream
+ * handle a sync stream into a csv file
  *
  * @param struct bladerf *master_dev -- master device
  * @param struct bladerf *slave_dev -- slave device
@@ -129,7 +128,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
  *
  * @brief recieves from the master and slave buffers and appends to a CSV
  **/
-int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
+int syncstream_handle_csv(struct bladerf *master_dev, struct bladerf *slave_dev, char *filename){
 
     /* check buffers */
 
@@ -140,7 +139,7 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
 
     /* open file */
     
-    FILE *fptr = fopen("sample.csv", "a");
+    FILE *fptr = fopen(filename, "a");
     if(!fptr) return -1;
 
     /* get number of buffer samples */
@@ -160,12 +159,105 @@ int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev){
     /* free memory */
 
     fclose(fptr);
+    syncstream_free_buffers();
+
+    return 0;
+}
+
+
+
+
+
+/**
+ * handle a syncstream into separate buffers (per channel)
+ *
+ * @param struct bladerf *master_dev -- master device
+ * @param struct bladerf *slave_dev -- slave device
+ * @param int16_t *buf0 -- channel 0 interleaved IQ data
+ * @param int16_t *buf1 -- channel 1 interleaved IQ data
+ * @param int16_t *buf2 -- channel 2 interleaved IQ data
+ * @param int16_t *buf3 -- channel 3 interleaved IQ data
+ * @return int -- 0 on success, -1 or balderf error code on failure
+ *
+ * @brief uses master/slave buffers & lengths to separate into 4 channels
+ **/
+int syncstream_handle_buffers(struct bladerf *master_dev, struct bladerf *slave_dev, int16_t **buf0, int16_t **buf1, int16_t **buf2, int16_t **buf3){
+
+    
+    /* check buffers */
+
+    if(!master_buffer || !slave_buffer){
+        fprintf(stderr, "master/slave Rx Buffers are NULL\n");
+        return BLADERF_ERR_MEM;
+    }
+ 
+    /* get per-device buffer length */
+
+    int num_samples;
+    if(master_buffer_len > slave_buffer_len){
+        num_samples = slave_buffer_len / 2;
+    }
+    else{
+        num_samples = master_buffer_len / 2;
+    }
+
+    /* allocate buffers */
+
+    *buf0 = (int16_t*)malloc(num_samples * sizeof(int16_t));
+    *buf1 = (int16_t*)malloc(num_samples * sizeof(int16_t));
+    *buf2 = (int16_t*)malloc(num_samples * sizeof(int16_t));
+    *buf3 = (int16_t*)malloc(num_samples * sizeof(int16_t));
+
+    if(!(*buf0 && *buf1 && *buf2 && *buf3)){
+        fprintf(stderr, "Failed to allocate buffers\n");
+        if(*buf0) free(*buf0);
+        if(*buf1) free(*buf1);
+        if(*buf2) free(*buf2);
+        if(*buf3) free(*buf3);
+        syncstream_free_buffers();
+        return -1;
+    }
+
+    /* recieve to buffers */
+
+    for(int i = 0, j = 0; i < num_samples*2; i+=4, j+=2){
+        (*buf0)[j] = master_buffer[i];
+        (*buf0)[j+1] = master_buffer[i+1];
+
+        (*buf1)[j] = master_buffer[i+2];
+        (*buf1)[j+1] = master_buffer[i+3];
+
+        (*buf2)[j] = slave_buffer[i];
+        (*buf2)[j+1] = slave_buffer[i+1];
+
+        (*buf3)[j] = slave_buffer[i+2];
+        (*buf3)[j+1] = slave_buffer[i+3];
+    }
+
+    /* free memory */
+
+    syncstream_free_buffers();
+    return 0;
+}
+
+
+
+
+
+/**
+ * free master/slave buffers
+ *
+ * @param none
+ * @return none
+ *
+ * @brief free buffers, set lengths to 0, set
+ * pointers to NULL
+ **/
+void syncstream_free_buffers(void){
     free(master_buffer);
     free(slave_buffer);
     master_buffer = NULL;
     slave_buffer = NULL;
     master_buffer_len = 0;
     slave_buffer_len = 0;
-
-    return 0;
 }

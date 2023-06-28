@@ -3,7 +3,6 @@
 
 #include <libbladeRF.h>
 #include <stdio.h>
-#include <malloc.h>
 #include "channel.h"
 
 struct stream_config{
@@ -20,6 +19,8 @@ static int16_t *slave_buffer = NULL;
 static unsigned int slave_buffer_len = 0;
 
 int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config);
-int syncstream_handle(struct bladerf *master_dev, struct bladerf *slave_dev);
+int syncstream_handle_csv(struct bladerf *master_dev, struct bladerf *slave_dev, char *filename);
+int syncstream_handle_buffers(struct bladerf *master_dev, struct bladerf *slave_dev, int16_t **buf0,     int16_t **buf1, int16_t **buf2, int16_t **buf3);
+void syncstream_free_buffers(void);
 
 #endif

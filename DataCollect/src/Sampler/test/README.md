@@ -9,7 +9,6 @@ Use Makefile commands to compile testers for each component individually. Most f
 - make channel
 - make clock
 - make trigger
-- make trigger_syncstream
 - make syncstream
 - make sampler
 - make all
@@ -28,7 +27,7 @@ Use Makefile commands to compile testers for each component individually. Most f
 3. Use API getters to check gpio config matches channel config
 4. Call channel\_enable()
 5. Check status of front end modules to ensure they are enabled
-6. Call channel\_deinit()
+6. Call channel\_disable()
 7. Check status of front end modules to ensure they are disabled
 8. Close devices
 
@@ -51,11 +50,6 @@ Use Makefile commands to compile testers for each component individually. Most f
 
 ## Trigger
 
-**Note: trigger has two builds, one for testing miniexp trigger signal with an
-oscilloscope, one for testing using a syncstream**
-
-</br>
-
 1. Open devices
 2. Call trigger\_init()
 3. Use API triggers state fn to check triggers match config
@@ -75,7 +69,17 @@ oscilloscope, one for testing using a syncstream**
 
 ## Syncstream
 
-COMING SOON
+1. Open devices
+2. Initialize channels
+3. Enable channels
+4. Call syncstream\_init()
+5. Call syncstream\_handle\_csv(), writing to a file to be checked later
+6. Disable channel
+7. Enable channels
+7. Call syncstream\_init()
+8. Call syncstream\_handle\_buffers(), and check buffers for data
+9. Disable channel
+10. Close devices
 
 </br>
 </br>

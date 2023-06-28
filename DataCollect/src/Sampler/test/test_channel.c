@@ -218,11 +218,11 @@ int test_channel_enable(struct bladerf *dev){
 
 
 
-int test_channel_deinit(struct bladerf *dev){
+int test_channel_disable(struct bladerf *dev){
     
     /* check function return */
 
-    int status = channel_deinit(dev);
+    int status = channel_disable(dev);
 
     if(status != 0){
         fprintf(stderr, "Failed to deinit channels: %s\n", bladerf_strerror(status));
@@ -303,18 +303,18 @@ int main(){
     }
     
 
-    /* test channel_deinit() */
+    /* test channel_disable() */
 
-    printf("[dev1] Testing channel_deinit()...\n");
-    if(test_channel_deinit(dev1) != 0){
+    printf("[dev1] Testing channel_disable()...\n");
+    if(test_channel_disable(dev1) != 0){
         bladerf_close(dev1);
         bladerf_close(dev2);
         fprintf(stderr, "[dev1] Channel enable failed\n");
         return -1;
     }
 
-    printf("[dev2] Testing channel_deinit()...\n");
-    if(test_channel_deinit(dev2) != 0){
+    printf("[dev2] Testing channel_disable()...\n");
+    if(test_channel_disable(dev2) != 0){
         bladerf_close(dev1);
         bladerf_close(dev2);
         fprintf(stderr, "[dev2] Channel enable failed\n");

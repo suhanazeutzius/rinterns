@@ -46,7 +46,7 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 
 	/* handle stream */
 
-	status = syncstream_handle(master_dev, slave_dev);
+	status = syncstream_handle_csv(master_dev, slave_dev, "sample.csv");
 	if(status != 0) return status;
 
 	/* disarm triggers */
@@ -56,10 +56,10 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 
 	/* disable modules */
 
-	channel_deinit(master_dev);
+	channel_disable(master_dev);
 	if(status != 0) return status;
 
-	channel_deinit(slave_dev);
+	channel_disable(slave_dev);
 	if(status != 0) return status;
 
 	return 0;

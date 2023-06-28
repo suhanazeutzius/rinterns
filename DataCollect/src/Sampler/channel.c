@@ -154,7 +154,7 @@ int channel_enable(struct bladerf *dev){
  *
  * @brief disables modules; does not mess with bandwidth, freq, etc.
  **/
-int channel_deinit(struct bladerf *dev){
+int channel_disable(struct bladerf *dev){
 
     int status;
 

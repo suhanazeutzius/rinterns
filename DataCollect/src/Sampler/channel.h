@@ -15,6 +15,6 @@ struct channel_config{
 
 int channel_init(struct bladerf *dev, struct channel_config ch_config);
 int channel_enable(struct bladerf *dev);
-int channel_deinit(struct bladerf *dev);
+int channel_disable(struct bladerf *dev);
 
 #endif

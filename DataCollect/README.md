@@ -95,7 +95,29 @@ larger and configurable non-metadata IQ sample.
 
 ## 4. Delta Phase Calculator
 
-COMING SOON
+## Program Overview
+
+The delta phase calculator takes two channels and compares the phsae difference between them. The phase shift is calculated from a reception of a known, pure tone (see Tone generator). The phase shift is calculated relative to one of the 4 channels, and is done individually for each of the 3 other channels. This calculated delta phase is stored to be used for the delta phase imposer input.
+
+### Program Outline
+
+1. Collect data from sampler program
+2. Calculate sum vector (Ch0 + Ch1) for two components, one of which is the base reference (Ch0)
+3. Calculate the difference vector (Ch0 + Ch1) in the same way
+4. Average the sum and difference vectors.
+5. Calculate the ratio of difference average to sum average (R)
+6. Phase is 2arctan(-Im{R})
+7. Store phase
+8. Repeat steps 2-7 twice, replacing Ch1 with Ch2, and then with Ch3
+
+### Complications and Future Considerations
+
+<span style="color:red">
+
+- Will this method work? The original calculation was based on geometry of incoming plane waves, however this will not be the case for all of our signals. Step 6 is especially suspicious.
+- What other methods could we use? Correlation?
+
+</span>
 
 ---
 

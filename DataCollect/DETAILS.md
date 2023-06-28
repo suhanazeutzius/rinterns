@@ -58,7 +58,7 @@ do you pick?
 ### Overview
 
 In order to allow for triggering, we need the sample rates to align extremely precisely, this means
-feeding them the same clock. This can be done with the SMB port API.
+feeding them the same clock. This can be done with the 10MHz clock in and clock out on BladeRF 2.0 (and potentially improved by providing an external Reference In for the PLL).
 
 ---
 
