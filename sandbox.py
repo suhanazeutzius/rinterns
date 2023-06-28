@@ -12,50 +12,21 @@ from flatirons.parse import *
 # Use custom matplotlib styling
 plt.style.use('flatirons/flatirons.mplstyle')
 
-fsample = 3*(1.023e6)
+fcenter_SDR = 1573.42e6
+fsample = 30.69e6
+fGPS = 1575.42e6
 
-signal = makeGPSClean(13, 0, 30, sample_rate=fsample)
-#visualizeGPS(signal, 0, fsample, 'Signal 1')
-
-noise_power_AWGN_dB = 16
-noise_power_AWGN = math.pow(10,(noise_power_AWGN_dB/10))
-
-signal = makeGPSNoisy(signal, noise_power_AWGN)
-#visualizeGPS(signal, 0, fsample, 'Simulated GPS Signal')
-
-#fcenter_SDR = 1567.42e6
-#fsample = 30.72e6
-#fGPS = 1575.42e6
-
-#I, Q = csv_parse('data/Samples_Jun_23/sample_1567.42M_307200_Wed_21_Jun_2023_11_19_52_AM_UTC.csv')
-##I, Q = csv_parse('data/Samples_Jun_22/sample_1575.418M_10ms_2.csv')
-#signal = I + 1j*Q
-##visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
-#
-##signal = filterSignal((fGPS-fcenter_SDR), fsample, signal, ['fir', 'bandpass'], bandwidth=2e6, order=100)
-##visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
-#
-#signal = tuneSignal(fGPS-fcenter_SDR, fsample, signal)
-##visualizeGPS(signal, fGPS, fsample, 'Signal 1')
-#
-#signal = scipy.signal.decimate(signal, 30)
-#
-#prns = range(1,32)
-#[corr0, corr1] = correlateSignal(signal, fsample, 'Signal 1', prns=prns, plot=True)
-
-#I, Q = dat_parse('data/Samples_Jun_26/sample_Wed_21_Jun_2023_05_19_57_PM_UTC.dat', 307200)
-#signal = I + 1j*Q
+I, Q = dat_parse('data/Samples_Jun_28/Data11.dat', 306900)
+signal = I + 1j*Q
 #visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
-#
+
 #signal = filterSignal((fGPS-fcenter_SDR), fsample, signal, ['fir', 'bandpass'], bandwidth=2e6, order=100)
 #visualizeGPS(signal, fcenter_SDR, fsample, 'Signal 1')
-#
+
 #signal = tuneSignal(fGPS-fcenter_SDR, fsample, signal)
 #visualizeGPS(signal, fGPS, fsample, 'Signal 1')
-#
-#signal = scipy.signal.decimate(signal, 30)
 
-#signal = np.fromfile(open('data/Samples_Jun_26/sample_data_decimated_6_but_maybe_30'), dtype=np.complex64)
+signal = scipy.signal.decimate(signal, 10)
 
-prns = range(1,32)
-[corr0, corr1] = correlateSignal(signal, fsample, 'Signal 1', np.deg2rad(26.3), sample_rate=fsample, prns=prns)
+prns = [8,10,15,18,23,24,27,32]
+[corr0, corr1] = correlateSignal(signal, 3.069e6, 'Signal 1', np.deg2rad(26.3), 100, prns=prns, plot=False)

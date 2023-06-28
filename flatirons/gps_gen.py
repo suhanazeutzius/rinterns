@@ -10,13 +10,11 @@ from flatirons.prn_gen import *
 # Inputs:
 #   prn          : prn number between 1-31 (inclusive)                      [int]
 #   data_bit     : data bit, either 0 or 1                                  [int]
-#   sample_ratio : ratio of SDR sampling rate to GPS chip rate              [int]
-#                  (fsample/fchip)
 #   num_periods  : number of C/A code periods in signal                     [int]
 #
 # Outputs:
 #   signal       : simulated ideal GPS signal   [numpy array of type np.complex_]
-def makeGPSClean(prn, data_bit, sample_ratio, num_periods=1, sample_rate=None):
+def makeGPSClean(prn, data_bit, num_periods=1, sample_rate=None):
     # Generate PRN (C/A) code
     ca = cacode(prn, sample_rate=sample_rate)
 
@@ -47,14 +45,6 @@ def makeGPSClean(prn, data_bit, sample_ratio, num_periods=1, sample_rate=None):
 
     # Tile signal
     signal = np.tile(signal, num_periods)
-
-#    # Resample signal up to bladeRF sampling frequency
-#    resampled = []
-#    for i in np.arange(len(signal)):
-#        for _ in range(sample_ratio):
-#            resampled.append(signal[i])
-#    signal = np.asarray(resampled)
-#    del resampled
 
     # Return signal
     return signal
