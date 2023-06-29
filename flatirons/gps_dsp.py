@@ -15,6 +15,10 @@ from flatirons.gps_gen import *
 #   signal       : signal that is being correlated [numpy array of type np.complex_]
 #                  against C/A code for provided prn
 #   signal_name  : name of the signal (for plotting)                        [string]
+#   freq         : frequency shift of the signal in Hz                       [float]
+#   sample_rate  : sampling rate of the signal in Hz                         [float]
+#   plot         : parameter controlling whether to display individual         [T/F]
+#                  correlation plots
 #
 # Outputs:
 #   corr0        : correlation coefficient vector when   [numpy array of type float]
@@ -28,8 +32,8 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
     #ca1 = ca1[0:int(len(ca1)/2)]
 
     # Perform correlation
-    corr0 = scipy.signal.correlate(ca0, signal)
-    corr1 = scipy.signal.correlate(ca1, signal)
+    corr0 = np.abs(scipy.signal.correlate(ca0, signal))
+    corr1 = np.abs(scipy.signal.correlate(ca1, signal))
     
     # Plot results
     if plot:
@@ -116,7 +120,24 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
     # Return signal
     return signal
 
-def correlateSignal(signal, fsample, signal_name, max_elevation_angle, freq_step, prns=range(1,32), freq_range=None, plot=False):
+# correlateSignal() performs correlation analysis on a GPS signal
+#
+# Inputs:
+#   signal      : signal that is being correlated  [numpy array of type np.complex_]
+#   fsample     : sampling rate of signal in Hz                              [float]
+#   signal_name : signal name (for plotting)                                [string]
+#   fdoppler    : maximum possible doppler shift in Hz                       [float]
+#   freq_step   : frequency step size for correlation algorithm in Hz        [float]
+#   prns        : prns to test in correlation algorithm           [list of type int]
+#   freq_range  : optional argument to overwrite range of       [list of type float]
+#                 frequencies to test (Hz)
+#   plot        : parameter controlling whether to display individual          [T/F]
+#                  correlation plots
+#
+# Outputs:
+#   corr0_max   : DEPRECATED
+#   corr1_max   : DEPRECATED
+def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot=False):
     # Define constants
     c = 299792458 # [m/s]
     fGPS = 1575.42e6 # [Hz]
@@ -129,13 +150,6 @@ def correlateSignal(signal, fsample, signal_name, max_elevation_angle, freq_step
         sample_rate = None
     else:
         sample_rate = fsample
-
-    # Calculate maximum doppler shift
-    Rgps = Rearth + hGPS # [m]
-    Rsat = np.sqrt((Rearth**2)+(Rgps**2)-(2*Rearth*Rgps*np.cos(max_elevation_angle))) # [m]
-    alpha = math.pi-np.arcsin(np.sin(max_elevation_angle)*Rgps/Rsat) # [rad]
-    slant_angle = alpha-(math.pi/2)
-    fdoppler = np.floor(Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
 
     # Define doppler frequency shift range
     if freq_range is None:
@@ -179,6 +193,25 @@ def correlateSignal(signal, fsample, signal_name, max_elevation_angle, freq_step
     # Return results
     return [corr0_max, corr1_max]
 
+# trimSignal() removes the first part of a signanl
+#
+# Inputs:
+#   sig         : signal to trim                      [numpy array of type complex_]
+#   fsample     : sampling rate of signal in Hz                              [float]
+#   trim_length : length of time to remove from signal in s                  [float]
+#
+# Outputs:
+#   sig         : the trimmed signal
+def trimSignal(sig, fsample, trim_length=2e-3):
+    # Calculate number of samples to remove
+    trim_samples = int(trim_length*fsample)
+
+    # Trim signal
+    sig = sig[trim_samples:]
+
+    # Return trimmed signal
+    return sig
+
 # visualizeGPS() visualizes an input GPS signal
 #
 # Inputs:
@@ -188,7 +221,7 @@ def correlateSignal(signal, fsample, signal_name, max_elevation_angle, freq_step
 #   signal_name : name of the signal (for plotting)                         [string]
 #
 # Outputs: None
-def visualizeGPS(signal, fcenter, fsample, signal_name):
+def visualizeSignal(signal, fcenter, fsample, signal_name):
     # Graph PSD
     PSD = np.abs(np.fft.fft(signal))**2 / (len(signal)*(fsample))
     PSD = 10.0*np.log10(PSD)
