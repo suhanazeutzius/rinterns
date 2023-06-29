@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <malloc.h>
 #include "syncstream.h"
-#include "bladedevice.h"
+#include "common/bladedevice.h"
 #include "channel.h"
 
 
@@ -59,29 +59,32 @@ int test_syncstream_handle_buffers(struct bladerf *dev1, struct bladerf *dev2, s
 
     printf("[dev1, dev2] Handling syncstream (buffers)...\n");
     int16_t *buf0, *buf1, *buf2, *buf3;
-    if(syncstream_handle_buffers(dev1, dev2, &buf0, &buf1, &buf2, &buf3)) return -1;
+    struct buffers buffers;
+    buffers_init(&buffers, &buf0, &buf1, &buf2, &buf3);
+
+    if(syncstream_handle_buffers(dev1, dev2, &buffers)) return -1;
 
     /* Check buffer sizes */
     printf("[dev1, dev2] Checking buffer sizes...\n");
 
     size_t buf_size;
 
-    if(malloc_usable_size(buf0) < 2*st_config.num_samples){
+    if(malloc_usable_size(*(buffers.buf0)) < 2*st_config.num_samples){
         fprintf(stderr, "[dev1, dev2] Buffer 0 is undersized\n");
         goto exit_fail;
     }
 
-    if(malloc_usable_size(buf1) < 2*st_config.num_samples){
+    if(malloc_usable_size(*(buffers.buf1)) < 2*st_config.num_samples){
         fprintf(stderr, "[dev1, dev2] Buffer 1 is undersized\n");
         goto exit_fail;
     }
 
-    if(malloc_usable_size(buf2) < 2*st_config.num_samples){
+    if(malloc_usable_size(*(buffers.buf2)) < 2*st_config.num_samples){
         fprintf(stderr, "[dev1, dev2] Buffer 2 is undersized\n");
         goto exit_fail;
     }
 
-    if(malloc_usable_size(buf3) < 2*st_config.num_samples){
+    if(malloc_usable_size(*(buffers.buf3)) < 2*st_config.num_samples){
         fprintf(stderr, "[dev1, dev2] Buffer 3 is undersized\n");
         goto exit_fail;
     }
@@ -90,10 +93,7 @@ int test_syncstream_handle_buffers(struct bladerf *dev1, struct bladerf *dev2, s
     return 0;
 
 exit_fail:
-    free(buf0);
-    free(buf1);
-    free(buf2);
-    free(buf3);
+    buffers_free(&buffers);
     return -1;
 }
 

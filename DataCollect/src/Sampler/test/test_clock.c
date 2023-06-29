@@ -1,7 +1,7 @@
 #include <libbladeRF.h>
 #include <stdio.h>
 #include <assert.h>
-#include "bladedevice.h"
+#include "common/bladedevice.h"
 #include "clock.h"
 
 #define ONBOARD_CLOCK (int)0

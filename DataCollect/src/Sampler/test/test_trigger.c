@@ -1,6 +1,6 @@
 #include <libbladeRF.h>
 #include <stdio.h>
-#include "bladedevice.h"
+#include "common/bladedevice.h"
 #include "trigger.h"
 #include "syncstream.h"
 

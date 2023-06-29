@@ -1,5 +1,5 @@
 #include "sampler.h"
-#include "bladedevice.h"
+#include "common/bladedevice.h"
 
 int main(){
 
