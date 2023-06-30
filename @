@@ -27,7 +27,7 @@ max_elevation_angle = np.deg2rad(26.3)
 c = 299792458 # [m/s]
 
 # Define data properties
-file_name = 'data/Samples_Jun_28/Data4.dat'
+file_name = 'data/Samples_Jun_28/Data8.dat'
 num_samples = 306900
 
 # Read in data

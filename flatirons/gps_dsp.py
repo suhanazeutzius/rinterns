@@ -27,23 +27,17 @@ from flatirons.gps_gen import *
 #                  data bit = 1
 def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
-    ca0 = makeGPSClean(prn, 0, sample_rate=sample_rate)
-    ca1 = makeGPSClean(prn, 1, sample_rate=sample_rate)
-    #ca1 = ca1[0:int(len(ca1)/2)]
+    ca = makeGPSClean(prn, num_periods=2, sample_rate=sample_rate)
 
     # Perform correlation
-    corr0 = np.abs(scipy.signal.correlate(ca0, signal))
-    corr1 = np.abs(scipy.signal.correlate(ca1, signal))
+    corr = np.abs(scipy.signal.correlate(ca, signal))
     
     # Plot results
     if plot:
-        fig, ax = plt.subplots(2,1)
-        ax[0].plot(corr0)
-        ax[1].plot(corr1)
-        ax[0].grid(True)
-        ax[1].grid(True)
-        ax[0].set_ylabel('Data Bit = 0')
-        ax[1].set_ylabel('Data Bit = 1')
+        fig, ax = plt.subplots()
+        ax.plot(corr)
+        ax.grid(True)
+        ax.set_ylabel('Correlation Coefficient')
         if freq is not None:
             fig.suptitle('Correlation of C/A ' + str(prn) + ' and ' + signal_name + ' with Fdoppler = ' + str(freq) + ' Hz')
         else:
@@ -51,7 +45,7 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
         plt.show()
 
     # Return correlation results
-    return [corr0, corr1]
+    return corr
 
 # filterSignal() applies a filter to an input signal
 #
@@ -135,8 +129,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 #                  correlation plots
 #
 # Outputs:
-#   corr0_max   : DEPRECATED
-#   corr1_max   : DEPRECATED
+#   corr        : DEPRECATED
 def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot=False):
     # Define constants
     c = 299792458 # [m/s]
@@ -155,12 +148,11 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
     if freq_range is None:
         freq_range = np.arange(-fdoppler, fdoppler, freq_step)
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots()
     # Iterate over all prns
     for prn in prns:
         # Instantiate empty vectors
-        corr0_max = []
-        corr1_max = []
+        corr_max = []
         
         # Iterate over all frequencies
         for freq in freq_range:
@@ -169,29 +161,24 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
             signal_shifted = signal * np.exp(-1j*2*np.pi*freq*t)
 
             # Correlate signal with C/A code corresponding to current prn
-            corr0, corr1 = correlateWithGPS(prn, signal_shifted, signal_name, freq=freq, sample_rate=sample_rate, plot=plot)
+            corr = correlateWithGPS(prn, signal_shifted, signal_name, freq=freq, sample_rate=sample_rate, plot=plot)
             
             # Save max correlation coefficients
-            corr0_max.append(corr0.max())
-            corr1_max.append(corr1.max())
+            corr_max.append(corr.max())
 
         # Plot results for current prn
-        ax[0].plot(freq_range, corr0_max, '.--', label=str(prn))
-        ax[1].plot(freq_range, corr1_max, '.--', label=str(prn))
+        ax.plot(np.flip(freq_range), corr_max, '.--', label=str(prn))
 
     # Finish up plotting
-    ax[0].grid(True)
-    ax[1].grid(True)
-    ax[0].legend()
-    ax[1].legend()
-    ax[1].set_xlabel('Doppler Frequency Shift')
-    ax[0].set_ylabel('Data Bit = 0')
-    ax[1].set_ylabel('Data Bit = 1')
+    ax.grid(True)
+    ax.legend()
+    ax.set_xlabel('Doppler Frequency Shift')
+    ax.set_ylabel('Max Correlation Coefficients')
     fig.suptitle('Max Correlation Coefficients Versus Doppler Frequency Shift For Selected PRNs')
     plt.show()
     
     # Return results
-    return [corr0_max, corr1_max]
+    return corr
 
 # trimSignal() removes the first part of a signanl
 #

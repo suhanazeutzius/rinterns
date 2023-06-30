@@ -9,39 +9,13 @@ from flatirons.prn_gen import *
 #
 # Inputs:
 #   prn          : prn number between 1-31 (inclusive)                      [int]
-#   data_bit     : data bit, either 0 or 1                                  [int]
 #   num_periods  : number of C/A code periods in signal                     [int]
 #
 # Outputs:
 #   signal       : simulated ideal GPS signal   [numpy array of type np.complex_]
-def makeGPSClean(prn, data_bit, num_periods=1, sample_rate=None):
+def makeGPSClean(prn, num_periods=1, sample_rate=None):
     # Generate PRN (C/A) code
-    ca = cacode(prn, sample_rate=sample_rate)
-
-    # Convert PRN code to 0s and 1s
-    ca = (ca > 0).astype(int)
-    
-    # Generate vector for data bit
-    if data_bit == 0:
-        dat = np.zeros(len(ca))
-    elif data_bit == 1:
-        dat = np.ones(len(ca))
-    dat = dat.astype(int)
-    
-    # Perform modulo-2 addition
-    gps = np.zeros(len(ca))
-    for i in np.arange(len(gps)):
-        if ca[i] == dat[i]:
-            gps[i] = 0
-        else:
-            gps[i] = 1
-    gps = gps.astype(int)
-    
-    # Perform BPSK modulation and convert to IQ data
-    I = np.ones(len(gps))
-    I[gps == 1] = -1
-    Q = np.zeros(len(gps))
-    signal = I + 1j*Q
+    signal = cacode(prn, sample_rate=sample_rate)
 
     # Tile signal
     signal = np.tile(signal, num_periods)
