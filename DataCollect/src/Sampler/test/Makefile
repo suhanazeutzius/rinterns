@@ -56,6 +56,10 @@ trigger: $(SOURCES) Makefile test_trigger.c
 trigger_single: $(SOURCES) Makefile test_trigger_single.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_single.c -o ./test
 
+## test trigger syncstream (single)
+trigger_syncstream: $(SOURCES) Makefile test_trigger_syncstream.c
+	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_syncstream.c -o ./test
+
 ## test syncstream
 syncstream: $(SOURCES) Makefile test_syncstream.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_syncstream.c -o ./test

@@ -9,6 +9,8 @@ Use Makefile commands to compile testers for each component individually. Most f
 - make channel
 - make clock
 - make trigger
+- make trigger_single
+- make trigger_syncstreams
 - make syncstream
 - make sampler
 - make all
@@ -61,6 +63,35 @@ Use Makefile commands to compile testers for each component individually. Most f
 9. Call trigger\_deinit()
 10. Use API triggers state fn to check triggers match disabled state
 11. Close devices
+
+</br>
+</br>
+
+---
+
+## Trigger Single
+
+1. Open device
+2. Initialize, arm master trigger
+3. Fire trigger
+4. Measure trigger with oscope
+5. Disarm trigger
+6. Close device
+
+</br>
+</br>
+
+---
+
+## Trigger Syncstream
+
+1. Open device
+2. initialize, arm slave trigger
+3. Initialize rx sycstream
+4. Externally drop trigger level
+5. Recieve to buffer & check for empty buffer
+6. Disarm trigger
+7. Close device
 
 </br>
 </br>

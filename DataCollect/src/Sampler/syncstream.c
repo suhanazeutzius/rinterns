@@ -33,14 +33,6 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
         return status;
     }
 
-    /* enable RF front ends */
-
-    status = channel_enable(master_dev);
-    if(status != 0) return status;
-
-    status = channel_enable(slave_dev);
-    if(status != 0) return status;
-
     /* check master/slave buffers */
 
     if(master_buffer){
@@ -78,41 +70,43 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
     }
     slave_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
 
+    /* enable RF front ends */
+
+    status = channel_enable(master_dev);
+    if(status != 0) goto exit_free_memory;
+
+    status = channel_enable(slave_dev);
+    if(status != 0) goto exit_free_memory;
+
     /* start stream recieve (master) */
 
     status = bladerf_sync_rx(master_dev, master_buffer, st_config.num_samples * 2, NULL, st_config.timeout_ms);
     if(status != 0){
-        free(slave_buffer);
-        slave_buffer = NULL;
-        slave_buffer_len = 0;
-
-        free(master_buffer);
-        master_buffer = NULL;
-        master_buffer_len = 0;
-
         fprintf(stderr, "Failed to start master sync rx stream (memory freed): %s\n", bladerf_strerror(status));
-        return status;
+		goto exit_free_memory;
     }
     
     /* start stream recieve (slave) */
 
     status = bladerf_sync_rx(slave_dev, slave_buffer, st_config.num_samples * 2, NULL, st_config.timeout_ms);
     if(status != 0){
-        free(slave_buffer);
-        slave_buffer = NULL;
-        slave_buffer_len = 0;
-
-        free(master_buffer);
-        master_buffer = NULL;
-        slave_buffer_len = 0;
-
         fprintf(stderr, "Failed to start slave sync rx stream (memory freed): %s\n", bladerf_strerror(status));
-        return status;
+		goto exit_free_memory;
     }
 
     /* return 0 on success */
 
     return 0;
+
+exit_free_memory:
+	free(slave_buffer);
+	slave_buffer = NULL;
+	slave_buffer_len = 0;
+
+	free(master_buffer);
+	master_buffer = NULL;
+	master_buffer_len = 0;
+	return status;
 }
 
 
