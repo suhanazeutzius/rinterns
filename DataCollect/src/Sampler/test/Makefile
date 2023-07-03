@@ -52,6 +52,10 @@ clock: $(SOURCES) Makefile test_clock.c
 trigger: $(SOURCES) Makefile test_trigger.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger.c -o ./test
 
+## test trigger single
+trigger_single: $(SOURCES) Makefile test_trigger_single.c
+	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_single.c -o ./test
+
 ## test syncstream
 syncstream: $(SOURCES) Makefile test_syncstream.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_syncstream.c -o ./test
