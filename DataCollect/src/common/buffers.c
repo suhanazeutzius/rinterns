@@ -46,3 +46,33 @@ void buffers_free(struct buffers *buffers){
 
     return;
 }
+
+
+
+
+
+int csv_to_buffers(char *filename, struct buffers *buffers){
+
+	/* open file */
+
+	FILE *fptr = fopen(filename);
+	if(!fptr){
+		fprintf(stderr, "Failed to convert csv to buffers: Failed to open file %s\n", filename);
+		return -1;
+	}
+
+	/* malloc buffers */
+
+	*(buffers->buf0) = (int16_t*)malloc(something);
+	*(buffers->buf1) = (int16_t*)malloc(something);
+	*(buffers->buf2) = (int16_t*)malloc(something);
+	*(buffers->buf3) = (int16_t*)malloc(something);
+	if(!(*(buffers->buf0) && *(buffers->buf1) && *(buffers->buf2) && *(buffers->buf1))){
+		fprintf(stderr, "Failed to convert csv to buffers: Buffer malloc error\n");
+		return -1;
+	}
+
+	/* read csv to buffers */
+
+	// TODO
+}

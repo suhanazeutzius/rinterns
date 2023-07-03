@@ -88,7 +88,12 @@ Use Makefile commands to compile testers for each component individually. Most f
 
 ## Sampler
 
-COMING SOON
+1. Open devices
+2. Setup device and stream configurations
+3. Run sampler
+4. Check return value
+5. Close devices
+6. Check output csv file
 
 </br>
 </br>

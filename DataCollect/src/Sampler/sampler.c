@@ -16,7 +16,7 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 
 	int status;
 
-	/* initialize SMB clock sharing */
+	/* initialize U.FL clock sharing */
 
 	status = clock_init(master_dev, slave_dev);
 	if(status != 0) return status;
