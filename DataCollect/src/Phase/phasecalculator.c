@@ -48,52 +48,102 @@ int phasecalculator_buffers(struct buffers *buffers, struct delta_phase *delta_p
 	int32_t diffI3_avg = 0;
 	int32_t diffQ3_avg = 0;
 
-	for(int i = 0; i < buffers->buf_size - 1; i+=2){
-		sumI1_avg = (sumI1_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf1))[i])) / cnt+1;
-		sumQ1_avg = (sumQ1_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf1))[i+1])) / cnt+1;
-		diffI1_avg = (sumI1_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf1))[i])) / cnt+1;
-		diffQ1_avg = (sumQ1_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf1))[i+1])) / cnt+1;
+	int32_t sumI, diffI, sumQ, diffQ;
 
-		sumI2_avg = (sumI2_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf2))[i])) / cnt+1;
-		sumQ2_avg = (sumQ2_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf2))[i+1])) / cnt+1;
-		diffI2_avg = (sumI2_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf2))[i])) / cnt+1;
-		diffQ2_avg = (sumQ2_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf2))[i+1])) / cnt+1;
+	for(int i = 0; i < buffers->buf_size - 1; i+=2, cnt+=1){
 
-		sumI3_avg = (sumI3_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf3))[i])) / cnt+1;
-		sumQ3_avg = (sumQ3_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf3))[i+1])) / cnt+1;
-		diffI3_avg = (sumI3_avg*cnt + ((*(buffers->buf0))[i]  + (*(buffers->buf3))[i])) / cnt+1;
-		diffQ3_avg = (sumQ3_avg*cnt + ((*(buffers->buf0))[i+1]  + (*(buffers->buf3))[i+1])) / cnt+1;
+		/* ith sum & diff for I,Q */
+		sumI = (*(buffers->buf0))[i] + (*(buffers->buf1))[i];
+		diffI = (*(buffers->buf0))[i] - (*(buffers->buf1))[i];
+		sumQ = (*(buffers->buf0))[i+1] + (*(buffers->buf1))[i+1];
+		diffQ = (*(buffers->buf0))[i+1] + (*(buffers->buf1))[i+1];
+		/* add sum & diff to averages */
+		sumI1_avg = ((sumI1_avg*cnt) + sumI) / (cnt+1);
+		sumQ1_avg = ((sumQ1_avg*cnt) + sumQ) / (cnt+1);
+		diffI1_avg = ((diffI1_avg*cnt) + diffI) / (cnt+1);
+		diffQ1_avg = ((diffQ1_avg*cnt) + diffQ) / (cnt+1);
+
+		/* ith sum & diff for I,Q */
+		sumI = (*(buffers->buf0))[i] + (*(buffers->buf2))[i];
+		diffI = (*(buffers->buf0))[i] - (*(buffers->buf2))[i];
+		sumQ = (*(buffers->buf0))[i+1] + (*(buffers->buf2))[i+1];
+		diffQ = (*(buffers->buf0))[i+1] + (*(buffers->buf2))[i+1];
+		/* add sum & diff to averages */
+		sumI2_avg = ((sumI2_avg*cnt) + sumI) / (cnt+1);
+		sumQ2_avg = ((sumQ2_avg*cnt) + sumQ) / (cnt+1);
+		diffI2_avg = ((diffI2_avg*cnt) + diffI) / (cnt+1);
+		diffQ2_avg = ((diffQ2_avg*cnt) + diffQ) / (cnt+1);
+
+		/* ith sum & diff for I,Q */
+		sumI = (*(buffers->buf0))[i] + (*(buffers->buf3))[i];
+		diffI = (*(buffers->buf0))[i] - (*(buffers->buf3))[i];
+		sumQ = (*(buffers->buf0))[i+1] + (*(buffers->buf3))[i+1];
+		diffQ = (*(buffers->buf0))[i+1] + (*(buffers->buf3))[i+1];
+		/* add sum & diff to averages */
+		sumI3_avg = ((sumI3_avg*cnt) + sumI) / (cnt+1);
+		sumQ3_avg = ((sumQ3_avg*cnt) + sumQ) / (cnt+1);
+		diffI3_avg = ((diffI3_avg*cnt) + diffI) / (cnt+1);
+		diffQ3_avg = ((diffQ3_avg*cnt) + diffQ) / (cnt+1);
 	}
 
 	/* convert avgs to complex */
+	double dsumI1_avg = (double)sumI1_avg;
+	double ddiffI1_avg = (double)diffI1_avg;
+	double dsumQ1_avg = (double)sumQ1_avg;
+	double ddiffQ1_avg = (double)diffQ1_avg;
+	
+	dsumI1_avg /= 2048;
+	ddiffI1_avg /= 2048;
+	dsumQ1_avg /= 2048;
+	ddiffQ1_avg /= 2048;
 
-	complex double sum1_avg = CMPLX(sumI1_avg, sumQ1_avg);
-	complex double diff1_avg = CMPLX(diffI1_avg, diffQ1_avg);
+	double dsumI2_avg = (double)sumI2_avg;
+	double ddiffI2_avg = (double)diffI2_avg;
+	double dsumQ2_avg = (double)sumQ2_avg;
+	double ddiffQ2_avg = (double)diffQ2_avg;
 
-	complex double sum2_avg = CMPLX(sumI2_avg, sumQ2_avg);
-	complex double diff2_avg = CMPLX(diffI2_avg, diffQ2_avg);
+	dsumI2_avg /= 2048;
+	ddiffI2_avg /= 2048;
+	dsumQ2_avg /= 2048;
+	ddiffQ2_avg /= 2048;
 
-	complex double sum1_avg = CMPLX(sumI3_avg, sumQ3_avg);
-	complex double diff1_avg = CMPLX(diffI3_avg, diffQ3_avg);
+	double dsumI3_avg = (double)sumI3_avg;
+	double ddiffI3_avg = (double)diffI3_avg;
+	double dsumQ3_avg = (double)sumQ3_avg;
+	double ddiffQ3_avg = (double)diffQ3_avg;
+
+	dsumI3_avg /= 2048;
+	ddiffI3_avg /= 2048;
+	dsumQ3_avg /= 2048;
+	ddiffQ3_avg /= 2048;
+
+	double complex csum1_avg = CMPLX(dsumI1_avg, dsumQ1_avg);
+	double complex cdiff1_avg = CMPLX(ddiffI1_avg, ddiffQ1_avg);
+
+	double complex csum2_avg = CMPLX(dsumI2_avg, dsumQ2_avg);
+	double complex cdiff2_avg = CMPLX(ddiffI2_avg, ddiffQ2_avg);
+
+	double complex csum3_avg = CMPLX(dsumI3_avg, dsumQ3_avg);
+	double complex cdiff3_avg = CMPLX(ddiffI3_avg, ddiffQ3_avg);
 
 	/* take diff to sum ratio */
 
-	complex double r1 = diff1_avg / sum1_avg;
-	complex double r2 = diff2_avg / sum2_avg;
-	complex double r3 = diff3_avg / sum3_avg;
+	double complex r1 = cdiff1_avg / csum1_avg;
+	double complex r2 = cdiff2_avg / csum2_avg;
+	double complex r3 = cdiff3_avg / csum3_avg;
 
 	/* get phase */
 
-	complex double cphase1 = 2 * catan(-1.0 * cimag(r1));
-	complex double cphase2 = 2 * catan(-1.0 * cimag(r2));
-	complex double cphase3 = 2 * catan(-1.0 * cimag(r3));
+	double phase1 = 2 * atan(-1.0 * cimag(r1));
+	double phase2 = 2 * atan(-1.0 * cimag(r2));
+	double phase3 = 2 * atan(-1.0 * cimag(r3));
 
 	/* convert from complex & store */
 
 	delta_phase->delta_phase0 = 0.0;
-	delta_phase->delta_phase1 = creal(cphase1);
-	delta_phase->delta_phase2 = creal(cphase2);
-	delta_phase->delta_phase3 = creal(cphase3);
+	delta_phase->delta_phase1 = phase1;
+	delta_phase->delta_phase2 = phase2;
+	delta_phase->delta_phase3 = phase3;
 
 	/* return 0 on success */
 	return 0;
@@ -114,7 +164,7 @@ int phasecalculator_buffers(struct buffers *buffers, struct delta_phase *delta_p
  **/
 int phasecalculator_csv(char *filename, struct delta_phase *delta_phase){
 
-	struct buffers;
+	struct buffers buffers;
 
 	/* get buffers from csv */
 

@@ -10,7 +10,7 @@ COMMON_INCLUDE_PATH = $(INCLUDE_PATH)/common
 LOCAL_SOURCE_PATH = ../
 LOCAL_INCLUDE_PATH = ../
 
-SOURCES = $(LOCAL_SOURCE_PATH)/phasecalculator.c $(LOCAL_SOURCE_PATH)/phsaeimposer.c
+SOURCES = $(LOCAL_SOURCE_PATH)/phasecalculator.c $(LOCAL_SOURCE_PATH)/phaseimposer.c $(COMMON_SOURCE_PATH)/buffers.c $(COMMON_SOURCE_PATH)/bladedevice.c
 
 
 ## Toolchain Path
@@ -41,7 +41,7 @@ LFLAGS = -L:$(LIBBLADERF_LD_PATH) -l:libbladeRF.so -l:libbladeRF.so.2 -lm
 
 
 ## test phase calculator
-calculator: $(SOURCES) Makefile test_channel.c
+calculator: $(SOURCES) Makefile test_calculator.c
 	@$(CC) $(CFLAGS) $(SOURCES) test_calculator.c -o ./test $(LFLAGS)
 
 ## test phase imposer

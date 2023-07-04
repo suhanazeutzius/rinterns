@@ -10,7 +10,7 @@ COMMON_INCLUDE_PATH = $(INCLUDE_PATH)/common
 LOCAL_SOURCE_PATH = ../
 LOCAL_INCLUDE_PATH = ../
 
-SOURCES = $(LOCAL_SOURCE_PATH)/channel.c $(LOCAL_SOURCE_PATH)/clock.c $(LOCAL_SOURCE_PATH)/sampler.c $(LOCAL_SOURCE_PATH)/syncstream.c $(LOCAL_SOURCE_PATH)/trigger.c $(COMMON_SOURCE_PATH)/buffers.c
+SOURCES = $(LOCAL_SOURCE_PATH)/channel.c $(LOCAL_SOURCE_PATH)/clock.c $(LOCAL_SOURCE_PATH)/sampler.c $(LOCAL_SOURCE_PATH)/syncstream.c $(LOCAL_SOURCE_PATH)/trigger.c $(COMMON_SOURCE_PATH)/buffers.c $(COMMON_SOURCE_PATH)/bladedevice.c
 
 
 ## Toolchain Path

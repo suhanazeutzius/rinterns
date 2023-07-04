@@ -11,7 +11,7 @@ The following 7 components are the main pieces of the front end data collection
 process, and are explained in further detail below.
 
 1. [Warmup Sampler](##1.-warmup-sampler)
-2. [Tone Generator](##2.-tone-generator)
+2. [Reference Transmitter](##2.-reference-transmitter)
 3. [Sampler](##3.-sampler)
 4. [Delta Phase Calculator](##4.-delta-phase-calculator)
 5. [Delta Phase Imposer](##5.-delta-phase-imposer)
@@ -40,6 +40,9 @@ SEE SAMPLER PROGRAM BELOW
 
 <span style="color:red">
 
+- Is this a necessary step? Does this have an impact on noise, and phase implications for the channels?
+- Does running the sampler then stopping affect the AGC enough to make it useless?
+
 </span>
 
 ---
@@ -47,7 +50,7 @@ SEE SAMPLER PROGRAM BELOW
 </br>
 </br>
 
-## 2. Tone Generator
+## 2. Reference Transmitter
 
 COMING SOON
 
@@ -66,24 +69,22 @@ larger and configurable non-metadata IQ sample.
 
 ### Program Outline
 
-1. Open Devices?
+1. Open Devices
 2. Initialize clocks
 3. Initialize channels
-4. Enable modules
-5. Initialize triggers
-6. Initialize streams
+4. Initialize triggers
+5. Initialize streams
+6. Enable front ends
 7. Fire triggers
 8. Handle streams
 9. Disable triggers
-10. Disable modules
-11. Close devices?
+10. Disable front end modules
+11. Close devices
 
 ### Complications and Future Considerations
 
 <span style="color:red">
 
-- Do we need/want to close the device every time?
-- Do we need to disable & re-enable modules every time we start a new stream?
 - Do configurations change when we are "not looking"? (Ex. gain, bandwidth, freq, etc...)
 
 </span>
@@ -97,7 +98,7 @@ larger and configurable non-metadata IQ sample.
 
 ## Program Overview
 
-The delta phase calculator takes two channels and compares the phsae difference between them. The phase shift is calculated from a reception of a known, pure tone (see Tone generator). The phase shift is calculated relative to one of the 4 channels, and is done individually for each of the 3 other channels. This calculated delta phase is stored to be used for the delta phase imposer input.
+The delta phase calculator takes two channels and compares the phsae difference between them. The phase shift is calculated from a reception of a known, pure tone (see Reference Transmitter). The phase shift is calculated relative to one of the 4 channels, and is done individually for each of the 3 other channels. This calculated delta phase is stored to be used for the delta phase imposer input.
 
 ### Program Outline
 
@@ -116,6 +117,7 @@ The delta phase calculator takes two channels and compares the phsae difference 
 
 - Will this method work? The original calculation was based on geometry of incoming plane waves, however this will not be the case for all of our signals. Step 6 is especially suspicious.
 - What other methods could we use? Correlation?
+- How large will the phase differences between channels be?
 
 </span>
 
@@ -134,18 +136,14 @@ a complex exponential multiplication.
 
 ## Program Outline
 
-1. Open CSV file & delta phase (file/data?)
-2. Parse CSV file into integer arrays
-3. Conver int arrays to complex
-4. Apply complex exponential multiplication to all channels independently
-5. Convert back to int arrays
-6. Write back to CSV
+1. Access samples via CSV or buffers
+2. Apply complex exponential (phase shift) to all channels independently
+3. Convert back to int arrays
+4. Write back to storage
 
 ## Complications and Future Considerations
 
 <span style="color:red">
-
-- How to best share the delta phase information?
 
 </span>
 

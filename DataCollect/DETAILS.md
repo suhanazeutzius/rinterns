@@ -22,13 +22,20 @@ Triggers allow for device Rx and Tx operations to be triggered on an electrical 
 multiple devices that run on the same sample rate, these should achieve synchronization within
 **+/- 1 sample**. 
 
+### Details
+
+Initializing a trigger simply initializes the data structure that will be used in future API calls.
+When the user arms a trigger, this gates all samples that would be coming through by marking their
+stream bits invalid in the FPGA. Arming the trigger also sets up the expansion pin as input/output
+with a pullup to 3.3V. When the user fires a trigger, the expansion pin is pulled low and the streams
+in the FPGA are marked as valid, allowing them to reach the USB buffers.
+
 ### Complications/Important Notes:
 
 <span style="color:red">
 
 - Currently, the only trigger signal usable on the FPGA is mini-exp[1] which is pin J51-1 on the
 blade xA9 (see [Schematic](/images/brf_miniexp_schematic.jpg) and [PCB](/images/brf_miniexp_pcb.jpg)
-- Trigger API functions must be used prior to streaming
 - Triggers must be disarmed prior to stoppage of sample streams (ie triggers must be
 disarmed prior to enable module = false API call)
 - Stream timeouts should be set to be long enough to accomodate the expected delay before
@@ -40,11 +47,8 @@ the triggers are fired (ie span the time between init & trigger fire)
 
 <span style="color:blue">
 
-- How can you initialize a trigger for multiple channels on one device? Trigger-init requires you
-to specify a channel, do you need to set up the other channel as a slave? if so, which signal
-do you pick?
-- How does the blade handle a triggered sample that cannot be received by the USB line until later?
-- Related to above, how does "handle-rx-operations" function in example-trigger.c file work?
+- If device 1 has RX channel 0 as the master trigger, is it necessary to specify device 1's RX channel 1
+as a slave, or will the channel be gated as associated with the RX channel 0?
 
 </span>
 
@@ -59,6 +63,21 @@ do you pick?
 
 In order to allow for triggering, we need the sample rates to align extremely precisely, this means
 feeding them the same clock. This can be done with the 10MHz clock in and clock out on BladeRF 2.0 (and potentially improved by providing an external Reference In for the PLL).
+
+### Details
+
+The connection between the two devices is a set of CLK IN and CLK OUT ports on each device, relating to 10MHz
+reference sharing. These ports are U.FL connections, which will be routed through a U.FL to SMA, then through
+SMA to SMA, then back to SMA to U.FL.
+
+### Questions:
+
+<span style="color:blue">
+
+- How important is clock drift in our application? Is this all handled by our post-processing correlation?
+- Does the multiple connections have an impact on clock signal integrity? Can we / do we even need to measure this?
+
+</span>
 
 ---
 
@@ -89,6 +108,11 @@ than or equal to half of the number of buffers
 ### Questions:
 
 <span style="color:blue">
+
+- Is it necessary to "clear" the buffers when having a triggered operation? For example if we used warmup sampling
+as a separate operation, then wanted to do triggered sampling, will the buffers in the device be full of old data
+from before the trigger was armed? If so should we somehow clear it out or merely truncate it? How do we know
+where to truncate it?
 
 </span>
 

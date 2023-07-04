@@ -1,9 +1,5 @@
 #include "phaseimposer.h"
 
-int main(){
-	return 0;
-}
-
 /**
  * Imposes a delta phase onto sample buffers
  *

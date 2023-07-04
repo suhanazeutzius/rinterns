@@ -74,7 +74,7 @@ int main(){
 
     status = bladerf_sync_config(dev, BLADERF_RX_X2, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
     if(status != 0){
-        fprintf(stderr, "Failed to configure master stream.\n");
+        fprintf(stderr, "Failed to configure stream.\n");
         return -1;
     }
 
@@ -112,7 +112,7 @@ int main(){
 
     status = bladerf_sync_rx(dev, buf, st_config.num_samples * 2, NULL, st_config.timeout_ms);
     if(status != 0){
-        fprintf(stderr, "Failed to start master sync rx stream (memory freed)\n");
+        fprintf(stderr, "Failed to start sync rx stream (memory freed)\n");
 		free(buf);
 		bladerf_trigger_arm(dev, &trig, false, 0, 0);
 		trig.role = BLADERF_TRIGGER_ROLE_DISABLED;
