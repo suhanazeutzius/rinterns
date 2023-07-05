@@ -130,7 +130,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 #
 # Outputs:
 #   corr        : DEPRECATED
-def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot=False):
+def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot_each=False, plot_3D=False):
     # Define constants
     c = 299792458 # [m/s]
     fGPS = 1575.42e6 # [Hz]
@@ -148,33 +148,53 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
     if freq_range is None:
         freq_range = np.arange(-fdoppler, fdoppler, freq_step)
 
-    fig, ax = plt.subplots()
+    # Instantiate matrix to store maximum correlation values
+    corr_max = np.zeros((len(prns),len(freq_range)))
+
     # Iterate over all prns
-    for prn in prns:
-        # Instantiate empty vectors
-        corr_max = []
+    for i, prn in enumerate(prns):
+        # Instantiate matrix to store correlation values
+        if plot_3D:
+            N_shifts = (int(fsample/(1.023e6))*1023*2)+len(signal)-1
+            corr_mat = np.zeros((len(freq_range), N_shifts))
         
         # Iterate over all frequencies
-        for freq in freq_range:
+        for j, freq in enumerate(freq_range):
             # Shift signal by frequency
             t = np.linspace(0, len(signal)/fsample, num=len(signal), endpoint=False)
             signal_shifted = signal * np.exp(-1j*2*np.pi*freq*t)
 
             # Correlate signal with C/A code corresponding to current prn
-            corr = correlateWithGPS(prn, signal_shifted, signal_name, freq=freq, sample_rate=sample_rate, plot=plot)
-            
-            # Save max correlation coefficients
-            corr_max.append(corr.max())
+            corr = correlateWithGPS(prn, signal_shifted, signal_name, freq=freq, sample_rate=sample_rate, plot=plot_each)
+ 
+            # Save correlation data
+            if plot_3D:
+                corr_mat[j,:] = corr
+            corr_max[i,j] = corr.max()
 
-        # Plot results for current prn
-        ax.plot(np.flip(freq_range), corr_max, '.--', label=str(prn))
+        if plot_3D:
+            # Plot results for current prn
+            max_shift = int(math.floor((N_shifts-1)/2))
+            if (N_shifts % 2) == 0:
+                shifts = np.concatenate(np.arange(-max_shift, 1), np.arange(0, max_shift+1))
+            else:
+                shifts = np.arange(-max_shift, max_shift+1)
+            X, Y = np.meshgrid(shifts[::1000], freq_range)
+            fig2, ax2 = plt.subplots(subplot_kw={"projection": "3d"})
+            ax2.plot_surface(X, Y, corr_mat[:,::1000])
+            ax2.set_title('PRN = ' + str(prn))
+            plt.show()
 
     # Finish up plotting
-    ax.grid(True)
-    ax.legend()
-    ax.set_xlabel('Doppler Frequency Shift')
-    ax.set_ylabel('Max Correlation Coefficients')
-    fig.suptitle('Max Correlation Coefficients Versus Doppler Frequency Shift For Selected PRNs')
+    fig1, ax1 = plt.subplots()
+    for i in np.arange(corr_max.shape[0]):
+        ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]))
+    ax1.set_yscale('log')
+    ax1.grid(True)
+    ax1.legend()
+    ax1.set_xlabel('Doppler Frequency Shift')
+    ax1.set_ylabel('Max Correlation Coefficients')
+    fig1.suptitle('Max Correlation Coefficients Versus Doppler Frequency Shift For Selected PRNs')
     plt.show()
     
     # Return results
