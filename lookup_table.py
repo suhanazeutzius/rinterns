@@ -198,6 +198,7 @@ def makeGPSSignal(prn_num, sample_ratio, noise=True, plot=False):
 #   none
 # return:
 #   phase_shift_table: dictionary of expected phase shifts for 2x2 antenna array for every angle in our range
+#       indexed as (elevation angle, azimuth angle)
 def makeLookupTable():
     phase_shift_table = {}
     # calculate phase shift for each antenna, using antenna 1 as a reference
@@ -218,9 +219,9 @@ def makeLookupTable():
 def find_nearest_index(array, value):
     diffs = []
     for i in range(0, len(array)):
-        diff = 0
-        diff = [diff + np.abs(array[i][j] - value[j]) for j in range(len(value))]
-        # diff = np.abs(array[i][0] - value[0]) + np.abs(array[i][1] - value[1]) + np.abs(array[i][2] - value[2])
+        # diff = 0
+        # diff = [diff + np.abs(array[i][j] - value[j]) for j in range(len(value))]
+        diff = np.abs(array[i][0] - value[0]) + np.abs(array[i][1] - value[1]) + np.abs(array[i][2] - value[2])
         diffs.append(diff)
     return diffs.index(min(diffs))
 
@@ -269,6 +270,22 @@ def gen_shifted_signals(sig1, azimuth, elevation):
     return sig
 
 
+def calc_AoA_monopulse(signals):
+    sum_beam = [(signals[0][i] + signals[2][i]) + (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
+    delta_az = [(signals[0][i] + signals[2][i]) - (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
+    delta_el = [(signals[0][i] - signals[2][i]) + (signals[1][i] - signals[3][i]) for i in range(len(signals[1]))]
+    sum_avg = np.mean(sum_beam)
+    delta_az_avg = np.mean(delta_az)
+    delta_el_avg = np.mean(delta_el)
+    r_az = delta_az_avg / sum_avg
+    r_el = delta_el_avg / sum_avg
+    theta_az = np.rad2deg(np.arccos((2 / np.pi) * np.arctan(-np.imag(sum_avg / delta_az_avg))))
+    theta_el = np.rad2deg(np.arccos((2 / np.pi) * np.arctan(-np.imag(1 / r_el))))
+    return theta_az, theta_el
+
+
+
+
 # configuration:
 # 1  2
 # 3  4
@@ -277,5 +294,8 @@ d = wavelength / 2
 lookup_table = makeLookupTable()
 
 sig1 = makeGPSSignal(22, 30)
-signals = gen_shifted_signals(sig1, azimuth=10, elevation=20)
-print(calc_AoA(signals, lookup_table))
+signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
+print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
+a1, a2 = calc_AoA_monopulse(signals)
+print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
+
