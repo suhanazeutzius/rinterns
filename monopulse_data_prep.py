@@ -12,6 +12,13 @@ from flatirons.parse import *
 # Use custom matplotlib styling
 plt.style.use('flatirons/flatirons.mplstyle')
 
+# prepareDataForMonopulse() outputs the data required for the monopulse argument to run
+#
+# Inputs:
+#   file_name        : name of the data file                                     [string]
+#   prn              : PRN that is being tracked                                    [int]
+#   wire_delay       : delay caused by a longer second wire (seconds)             [float]
+#   plot_correlation : option controlling whether to plot the correlation data      [T/F]
 def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
@@ -40,8 +47,8 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     sig1 = trimSignal(sig1, fsample, trim_length=wire_delay)
     
     # Lowpass filter signal
-    sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['butter', 'lowpass'], bandwidth=1e6, order=3)
-    sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['butter', 'lowpass'], bandwidth=1e6, order=3)
+    sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['fir', 'lowpass'], bandwidth=1e6, order=100)
+    sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
     
     # Calculate maximum doppler shift
     Rgps = Rearth + hGPS # [m]
