@@ -14,7 +14,7 @@ plt.style.use('flatirons/flatirons.mplstyle')
 
 # Create clean simulated GPS signal
 fsample = 10*(1.023e6) # [Hz]
-sig = makeGPSClean(13, num_periods=2, sample_rate=fsample)
+sig = makeGPSClean(29, num_periods=2, sample_rate=fsample)
 
 # Add noise to signal
 noise_power_AWGN_dB = 16
@@ -30,7 +30,7 @@ sig = sig * np.exp(1j*2*np.pi*(offset)*t)
 
 # Apply doppler shift
 t = np.linspace(0, len(sig)/fsample, num=len(sig), endpoint=False)
-sig = sig * np.exp(-1j*2*np.pi*500*t)
+sig = sig * np.exp(1j*2*np.pi*890*t)
 
 # Bandpass filter signal
 sig = filterSignal(offset, fsample, sig, ['fir', 'bandpass'], bandwidth=1.5e6, order=100)
@@ -64,5 +64,5 @@ alpha = math.pi-np.arcsin(np.sin(max_elevation_angle)*Rgps/Rsat) # [rad]
 slant_angle = alpha-(math.pi/2) # [rad]
 fdoppler = np.floor(Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
 
-prns = [10,13,7]
-_ = correlateSignal(sig, fsample, 'Simulated PRN 13', fdoppler, 10, prns=prns, plot_3D=True)
+prns = [5,13,20,29]
+_ = correlateSignal(sig, fsample, 'Simulated PRN 13', fdoppler, 10, prns=prns)

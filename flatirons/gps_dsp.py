@@ -31,15 +31,20 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
 
     # Perform correlation
     corr = np.abs(scipy.signal.correlate(ca, signal))
+
+    # Create shift vector
+    max_shift = int((len(ca)+len(signal)-2)/2)
+    shift = np.arange(-max_shift, max_shift+1)
     
     # Plot results
     if plot:
         fig, ax = plt.subplots()
-        ax.plot(corr)
+        ax.plot(shift, corr)
         ax.grid(True)
         ax.set_ylabel('Correlation Coefficient')
+        ax.set_xlabel('Shift')
         if freq is not None:
-            fig.suptitle('Correlation of C/A ' + str(prn) + ' and ' + signal_name + ' with Fdoppler = ' + str(freq) + ' Hz')
+            fig.suptitle('C/A = ' + str(prn) + ' and Fdoppler = ' + str(freq) + ' Hz')
         else:
             fig.suptitle('Correlation of C/A ' + str(prn) + ' and ' + signal_name)
         plt.show()
@@ -130,7 +135,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 #
 # Outputs:
 #   corr        : DEPRECATED
-def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot_each=False, plot_3D=False):
+def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot_CAF=True, plot_each=False, plot_3D=False):
     # Define constants
     c = 299792458 # [m/s]
     fGPS = 1575.42e6 # [Hz]
@@ -170,7 +175,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
             # Save correlation data
             if plot_3D:
                 corr_mat[j,:] = corr
-            corr_max[i,j] = corr.max()
+            corr_max[i,j] = corr.max()/np.median(corr)
 
         if plot_3D:
             # Plot results for current prn
@@ -185,20 +190,44 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
             ax2.set_title('PRN = ' + str(prn))
             plt.show()
 
-    # Finish up plotting
-    fig1, ax1 = plt.subplots()
-    for i in np.arange(corr_max.shape[0]):
-        ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]))
-    ax1.set_yscale('log')
-    ax1.grid(True)
-    ax1.legend()
-    ax1.set_xlabel('Doppler Frequency Shift')
-    ax1.set_ylabel('Max Correlation Coefficients')
-    fig1.suptitle('Max Correlation Coefficients Versus Doppler Frequency Shift For Selected PRNs')
-    plt.show()
-    
+    # Extract prn and doppler frequency shift correction corresponding to maximum peak
+    prn_idx, fdoppler_correction_idx = np.where(corr_max == np.amax(np.amax(corr_max)))
+    prn = prns[prn_idx[0]]
+    fdoppler_correction = freq_range[fdoppler_correction_idx[0]]
+
+    if plot_CAF:
+        # Finish up plotting
+        fig1, ax1 = plt.subplots()
+        for i in np.arange(corr_max.shape[0]):
+            ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]))
+        ax1.set_yscale('log')
+        ax1.grid(True)
+        ax1.legend()
+        ax1.set_xlabel('Doppler Frequency Shift')
+        ax1.set_ylabel('Max/Median Ratio')
+        fig1.suptitle('Max/Median Ratio  Versus Doppler Frequency Shift For Selected PRNs')
+        plt.show()
+
     # Return results
+    return prn, fdoppler_correction
+
+def correlateForMonopulse(sig, fsample, fdoppler_correction, prn, signal_name, plot=False):
+    # Update sample_rate variable
+    if fsample == 1.023e6:
+        sample_rate = None
+    else:
+        sample_rate = fsample
+    
+    # Shift signal by doppler shift frequency
+    t = np.linspace(0, len(sig)/fsample, num=len(sig), endpoint=False)
+    sig = sig * np.exp(-1j*2*np.pi*fdoppler_correction*t)
+
+    # Correlate signal with C/A code corresponding to tracked  prn
+    corr = correlateWithGPS(prn, sig, signal_name, freq=fdoppler_correction, sample_rate=sample_rate, plot=plot)
+
+    # Return correlation results
     return corr
+
 
 # trimSignal() removes the first part of a signanl
 #

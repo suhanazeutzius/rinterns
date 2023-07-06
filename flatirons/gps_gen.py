@@ -27,8 +27,8 @@ def makeGPSClean(prn, num_periods=1, sample_rate=None):
 #
 # Inputs:
 #   signal            : ideal GPS signal        [numpy array of type np.complex_]
-#   noise_power_AWGN  : AWGN noise power                                  [float]
-#   noise_power_phase : phase noise power                                 [float]
+#   noise_power_AWGN  : AWGN noise power (linear)                         [float]
+#   noise_power_phase : phase noise power (linear)                        [float]
 #
 # Outputs:
 #   signal            : noisy GPS signal        [numpy array of type np.complex_]

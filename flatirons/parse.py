@@ -44,9 +44,16 @@ def csv_parse(csv_file):
 #   dat_file : filepath for data file
 #
 # Outputs: IQ data for signal (I,Q)                              [numpy arrays of type int]
-def dat_parse(dat_file, num_samples):
+def dat_parse(dat_file, num_antennas=1):
     with open(dat_file, mode="rb") as fs:
         data = fs.read()
-        I = [int.from_bytes(data[i:i+2], byteorder='little', signed=True) for i in range(0, len(data), 4)]
-        Q = [int.from_bytes(data[i+2:i+4], byteorder='little', signed=True) for i in range(0, len(data), 4)]
-        return np.array(I), np.array(Q)
+        if num_antennas == 1:
+            I = [int.from_bytes(data[i:i+2], byteorder='little', signed=True) for i in range(0, len(data), 4)]
+            Q = [int.from_bytes(data[i+2:i+4], byteorder='little', signed=True) for i in range(0, len(data), 4)]    
+            return np.array(I), np.array(Q)
+        elif num_antennas == 2:
+            I1 = [int.from_bytes(data[i:i+2], byteorder='little', signed=True) for i in range(0, len(data), 8)]
+            Q1 = [int.from_bytes(data[i+2:i+4], byteorder='little', signed=True) for i in range(0, len(data), 8)]
+            I2 = [int.from_bytes(data[i+4:i+6], byteorder='little', signed=True) for i in range(0, len(data), 8)]
+            Q2 = [int.from_bytes(data[i+6:i+8], byteorder='little', signed=True) for i in range(0, len(data), 8)]
+            return np.array(I1), np.array(Q1), np.array(I2), np.array(Q2)
