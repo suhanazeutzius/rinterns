@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal
 from scipy import signal, fftpack
+from monopulse_data_prep import *
 
 
 def noisy_signal_gen(phi, prn=13):
@@ -293,9 +294,15 @@ wavelength = 1
 d = wavelength / 2
 lookup_table = makeLookupTable()
 
-sig1 = makeGPSSignal(22, 30)
-signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
-print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
-a1, a2 = calc_AoA_monopulse(signals)
-print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
+# sig1 = makeGPSSignal(22, 30)
+# signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
+# print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
+# a1, a2 = calc_AoA_monopulse(signals)
+# print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
+sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 12, 7.13e-9, plot_correlation=True)
+phi = calc_phase_shift(sig1, sig2)
+theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))
+print(np.rad2deg(theta))
+
+print("done")
