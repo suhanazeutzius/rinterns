@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.signal
-from scipy import signal, fftpack
-
+plt.style.use("flatirons.mplstyle")
 
 def noisy_signal_gen(phi, prn=13):
     """
@@ -194,14 +193,10 @@ def makeGPSSignal(prn_num, sample_ratio, noise=True, plot=False):
     return BPSK_signal
 
 
-# params:
-#   none
-# return:
-#   phase_shift_table: dictionary of expected phase shifts for 2x2 antenna array for every angle in our range
 def makeLookupTable():
     phase_shift_table = {}
     # calculate phase shift for each antenna, using antenna 1 as a reference
-    for elevation_angle in range(0, 27, 2):  # elevation angles
+    for elevation_angle in range(0, 31, 2):  # elevation angles
         for azim_angle in range(0, 360, 2):  # azimuth angles
             az_angle = np.deg2rad(azim_angle)
             elev_angle = np.deg2rad(elevation_angle)
@@ -218,10 +213,11 @@ def makeLookupTable():
 def find_nearest_index(array, value):
     diffs = []
     for i in range(0, len(array)):
-        diff = 0
-        diff = [diff + np.abs(array[i][j] - value[j]) for j in range(len(value))]
-        # diff = np.abs(array[i][0] - value[0]) + np.abs(array[i][1] - value[1]) + np.abs(array[i][2] - value[2])
+        diff = np.abs(array[i][0] - value[0]) + np.abs(array[i][1] - value[1]) + np.abs(array[i][2] - value[2])
+        # diff = np.sqrt(np.square(array[i][0] - value[0]) + np.square(array[i][1] - value[1]) + np.square(array[i][2] - value[2]))
         diffs.append(diff)
+    # array = np.asarray(array)
+    # idx = (np.abs(array - value)).argmin()
     return diffs.index(min(diffs))
 
 
@@ -274,8 +270,83 @@ def gen_shifted_signals(sig1, azimuth, elevation):
 # 3  4
 wavelength = 1
 d = wavelength / 2
-lookup_table = makeLookupTable()
-
+# lookup_table = makeLookupTable()
 sig1 = makeGPSSignal(22, 30)
 signals = gen_shifted_signals(sig1, azimuth=10, elevation=20)
-print(calc_AoA(signals, lookup_table))
+
+# diff_beam_horiz, diff_beam_vert, sum_beam = []
+
+# plt.plot(np.real(sum_beam))
+# plt.show()
+# for elevation_angle in range(0, 31, 2):  # elevation angles
+#     diff_horiz, diff_vert, sum = 0
+#     for azim_angle in range(0, 360, 2):  # azimuth angles
+phase_shift_table = {}
+# calculate phase shift for each antenna, using antenna 1 as a reference
+# sum_beam = np.empty(61)
+# for elevation_angle in range(-30, 31, 2):  # elevation angles
+#     angle_sum = 0
+#     for azim_angle in range(0, 1, 2):  # azimuth angles
+#         signals = gen_shifted_signals(sig1, azimuth=azim_angle, elevation=elevation_angle)
+#         sum_vector = [np.abs(signals[0][i]) + np.abs(signals[1][i]) + np.abs(signals[2][i]) + np.abs(signals[3][i]) for i in range(len(signals[0]))]
+#         angle_sum += np.mean(signals[0])
+#     sum_beam[elevation_angle] = angle_sum
+#
+array_factor = []
+for theta in range(-180, 181):
+    af = 0
+    for phi in range(0, 1):
+        for b in range(0, 2):
+            for a in range(0, 2):
+                af += np.exp(-1j * np.pi * np.sin(np.deg2rad(theta)) * (a * np.cos(np.deg2rad(phi)) + b * np.sin(np.deg2rad(phi))))
+    array_factor.append(af)
+
+array_factor /= max(array_factor)
+fig2, ax2 = plt.subplots()
+ax2.plot(range(-180, 181), array_factor)
+plt.title("Array Factor for all Elevation Angles")
+plt.xlabel("Angle from Boresight")
+plt.ylabel("Normalized Array Factor")
+
+sum_beam = []
+diff_beam = []
+x = np.arange(-90, 90)
+for theta in range(-90, 91):
+    s = 0
+    diff = 0
+    for phi in range(0, 1):
+        sigs = gen_shifted_signals(sig1, azimuth=phi, elevation=theta)
+        s = [sigs[0][i] + sigs[1][i] for i in range(len(sigs[0]))]
+        diff = [sigs[0][i] - sigs[1][i] for i in range(len(sigs[0]))]
+        s_avg = np.mean(s)
+        d_avg = np.mean(diff)
+    sum_beam.append(s_avg)
+    diff_beam.append(d_avg)
+
+sum_beam = np.abs(sum_beam)
+sum_beam /= max(sum_beam)
+diff_beam = np.abs(diff_beam)
+diff_beam /= max(diff_beam)
+fig1, ax1 = plt.subplots()
+ax1.plot(range(-90, 91), sum_beam)
+ax1.plot(range(-90, 91), diff_beam)
+plt.title("Sum and Difference Beams Between Two Elements")
+plt.xlabel("Angle from Boresight")
+plt.ylabel("Normalized Magnitude of Beam")
+
+idx = np.argwhere(np.diff(np.sign(sum_beam - diff_beam))).flatten()
+ax1.plot(x[idx], sum_beam[idx], 'ro')
+
+sum_beam = [20 * np.log10(sum_beam[i]) for i in range(0, len(sum_beam))]
+diff_beam = [20 * np.log10(diff_beam[i]) for i in range(0, len(sum_beam))]
+
+fig, ax = plt.subplots()
+ax.plot(range(-90, 91), sum_beam)
+ax.plot(range(-90, 91), diff_beam)
+ax.set_ylim(-30, 0)
+plt.title("Sum and Difference Beams Between Two Elements")
+plt.xlabel("Angle from Boresight")
+plt.ylabel("Normalized Magnitude of Beam (dB)")
+# idx2 = np.argwhere(np.diff(np.sign(sum_beam - diff_beam))).flatten()
+# ax1.plot(x[idx2], sum_beam[idx2], 'ro')
+plt.show()
