@@ -57,6 +57,7 @@ int phasecalculator_buffers(struct buffers *buffers, struct delta_phase *delta_p
 		diffI = (*(buffers->buf0))[i] - (*(buffers->buf1))[i];
 		sumQ = (*(buffers->buf0))[i+1] + (*(buffers->buf1))[i+1];
 		diffQ = (*(buffers->buf0))[i+1] + (*(buffers->buf1))[i+1];
+
 		/* add sum & diff to averages */
 		sumI1_avg = ((sumI1_avg*cnt) + sumI) / (cnt+1);
 		sumQ1_avg = ((sumQ1_avg*cnt) + sumQ) / (cnt+1);
@@ -87,50 +88,24 @@ int phasecalculator_buffers(struct buffers *buffers, struct delta_phase *delta_p
 	}
 
 	/* convert avgs to complex */
-	double dsumI1_avg = (double)sumI1_avg;
-	double ddiffI1_avg = (double)diffI1_avg;
-	double dsumQ1_avg = (double)sumQ1_avg;
-	double ddiffQ1_avg = (double)diffQ1_avg;
-	
-	dsumI1_avg /= 2048;
-	ddiffI1_avg /= 2048;
-	dsumQ1_avg /= 2048;
-	ddiffQ1_avg /= 2048;
 
-	double dsumI2_avg = (double)sumI2_avg;
-	double ddiffI2_avg = (double)diffI2_avg;
-	double dsumQ2_avg = (double)sumQ2_avg;
-	double ddiffQ2_avg = (double)diffQ2_avg;
+	double complex csum1_avg = CMPLX((double)sumI1_avg, (double)sumQ1_avg);
+	double complex cdiff1_avg = CMPLX((double)diffI1_avg, (double)diffQ1_avg);
 
-	dsumI2_avg /= 2048;
-	ddiffI2_avg /= 2048;
-	dsumQ2_avg /= 2048;
-	ddiffQ2_avg /= 2048;
+	double complex csum2_avg = CMPLX((double)sumI2_avg, (double)sumQ2_avg);
+	double complex cdiff2_avg = CMPLX((double)diffI2_avg, (double)diffQ2_avg);
 
-	double dsumI3_avg = (double)sumI3_avg;
-	double ddiffI3_avg = (double)diffI3_avg;
-	double dsumQ3_avg = (double)sumQ3_avg;
-	double ddiffQ3_avg = (double)diffQ3_avg;
-
-	dsumI3_avg /= 2048;
-	ddiffI3_avg /= 2048;
-	dsumQ3_avg /= 2048;
-	ddiffQ3_avg /= 2048;
-
-	double complex csum1_avg = CMPLX(dsumI1_avg, dsumQ1_avg);
-	double complex cdiff1_avg = CMPLX(ddiffI1_avg, ddiffQ1_avg);
-
-	double complex csum2_avg = CMPLX(dsumI2_avg, dsumQ2_avg);
-	double complex cdiff2_avg = CMPLX(ddiffI2_avg, ddiffQ2_avg);
-
-	double complex csum3_avg = CMPLX(dsumI3_avg, dsumQ3_avg);
-	double complex cdiff3_avg = CMPLX(ddiffI3_avg, ddiffQ3_avg);
+	double complex csum3_avg = CMPLX((double)sumI3_avg, (double)sumQ3_avg);
+	double complex cdiff3_avg = CMPLX((double)diffI3_avg, (double)diffQ3_avg);
 
 	/* take diff to sum ratio */
 
 	double complex r1 = cdiff1_avg / csum1_avg;
 	double complex r2 = cdiff2_avg / csum2_avg;
 	double complex r3 = cdiff3_avg / csum3_avg;
+
+    printf("%f, %f, %f\n", creal(r1), creal(r2), creal(r3));
+    printf("%f, %f, %f\n", cimag(r1), cimag(r2), cimag(r3));
 
 	/* get phase */
 

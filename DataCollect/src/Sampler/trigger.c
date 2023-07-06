@@ -19,7 +19,7 @@ int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct b
 	int status;
 
     bladerf_channel channel = BLADERF_CHANNEL_RX(0);
-    bladerf_trigger_signal signal = BLADERF_TRIGGER_J51_1;
+    bladerf_trigger_signal signal = BLADERF_TRIGGER_MINI_EXP_1;
 
 	/* init master trigger */
 	status = bladerf_trigger_init(master_dev, channel, signal, master_trig);
@@ -90,7 +90,38 @@ int trigger_deinit(struct bladerf *master_dev, struct bladerf *slave_dev, struct
 		fprintf(stderr, "Failed to disarm slave trigger: %s\n", bladerf_strerror(status));
 		return status;
 	}
-	
+
+    /* clear trigger fires */
+//    uint8_t val;
+//    status = bladerf_read_trigger(master_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &val);
+//    if(status != 0){
+//        fprintf(stderr, "Failed to read trigger register (master): %s\n", bladerf_strerror(status));
+//        return status;
+//    }
+//
+//    val &= ~(BLADERF_TRIGGER_REG_FIRE);
+//
+//    status = bladerf_write_trigger(master_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, val);
+//    if(status != 0){
+//        fprintf(stderr, "Failed to write trigger register (master): %s\n", bladerf_strerror(status));
+//        return status;
+//    }
+//
+//
+//    status = bladerf_read_trigger(slave_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &val);
+//    if(status != 0){
+//        fprintf(stderr, "Failed to read trigger register (slave): %s\n", bladerf_strerror(status));
+//        return status;
+//    }
+//
+//    val &= ~(BLADERF_TRIGGER_REG_FIRE);
+//
+//    status = bladerf_write_trigger(slave_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, val);
+//    if(status != 0){
+//        fprintf(stderr, "Failed to write trigger register (slave): %s\n", bladerf_strerror(status));
+//        return status;
+//    }
+
 	return 0;
 }
 

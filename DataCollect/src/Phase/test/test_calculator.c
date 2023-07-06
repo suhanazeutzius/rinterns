@@ -25,21 +25,19 @@ int main(){
 		fprintf(stderr, "Failed to allocate buffers.\n");
 		return -1;
 	}
-	bufs.buf_size = (sizeof(int16_t) * num_samples);
+	bufs.buf_size = num_samples;
 
 	/* fill buffers with waves */
 	printf("Filling buffers...\n");
 
 	for(int i = 0, t = 0; i < num_samples - 1; i+=2, t++){
-		double complex z0 = CMPLX(w * t, w * t);
-		double complex z1 = CMPLX(w * t + phi1, w * t + phi1);
-		double complex z2 = CMPLX(w * t + phi2, w * t + phi2);
-		double complex z3 = CMPLX(w * t + phi3, w * t + phi3);
+		double complex z = CMPLX(w * t, 0.0);
+        double complex wave = 2048 * ccos(z);
 
-		double complex wave0 = 2048 * ccos(z0);
-		double complex wave1 = 2048 * ccos(z1);
-		double complex wave2 = 2048 * ccos(z2);
-		double complex wave3 = 2048 * ccos(z3);
+		double complex wave0 = wave; 
+		double complex wave1 = cexp(CMPLX(phi1, 0.0)) * wave;
+		double complex wave2 = cexp(CMPLX(phi2, 0.0)) * wave;
+		double complex wave3 = cexp(CMPLX(phi3, 0.0)) * wave;
 
 		buf0[i] = (int16_t) creal(wave0);
 		buf0[i+1] = (int16_t) cimag(wave0);

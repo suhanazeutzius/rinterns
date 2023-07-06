@@ -16,51 +16,57 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 
 	int status;
 
-	/* initialize U.FL clock sharing */
+    /* init clock sharing */
+    status = clock_init(master_dev, slave_dev);
+    if(status != 0) return status;
 
-	status = clock_init(master_dev, slave_dev);
-	if(status != 0) return status;
+    /* init channels */
+    status = channel_init(master_dev, ch_config);
+    if(status != 0) return status;
 
-	/* initialize device channels */
+    status = channel_init(slave_dev, ch_config);
+    if(status != 0) return status;
 
-	status = channel_init(master_dev, ch_config);
-	if(status != 0) return status;
-	
-	status = channel_init(slave_dev, ch_config);
-	if(status != 0) return status;
+    /* init triggers */
+    struct bladerf_trigger master_trig, slave_trig;
+    status = trigger_init(master_dev, slave_dev, &master_trig, &slave_trig);
+    if(status != 0) return status;
 
-	/* initialize triggers */
+    /* init syncstream */
+    status = syncstream_init(master_dev, slave_dev, st_config);
+    if(status != 0) goto exit_fail;
 
-	struct bladerf_trigger master_trig, slave_trig;
-	status = trigger_init(master_dev, slave_dev, &master_trig, &slave_trig);
-	if(status != 0) return status;
+    /* fire trigger */
+    status = trigger_fire(master_dev, &master_trig);
+    if(status != 0) goto exit_fail;
 
-	/* configure streams, start recieve (ENSURE TIMEOUT IS SUFFICIENT!!!) */
+    /* handle syncstream */
 
-	status = syncstream_init(master_dev, slave_dev, st_config);
-	if(status != 0) return status;
+    status = syncstream_handle_csv(master_dev, slave_dev, "sample.csv");
+    if(status != 0) goto exit_fail;
 
-	/* fire trigger */
-	status = trigger_fire(master_dev, &master_trig);
-	if(status != 0) return status;
+    /* deinit triggers */
 
-	/* handle stream */
+    trigger_deinit(master_dev, slave_dev, &master_trig, &slave_trig);
 
-	status = syncstream_handle_csv(master_dev, slave_dev, "sample.csv");
-	if(status != 0) return status;
+    /* disable modules */
 
-	/* disarm triggers */
+    status = channel_disable(master_dev);
+    if(status != 0){
+        status = channel_disable(slave_dev);
+        if(status != 0) return status;
+        return status;
+    }
+    else{
+        status = channel_disable(slave_dev);
+        if(status != 0) return status;
+    }
 
-	status = trigger_deinit(master_dev, slave_dev, &master_trig, &slave_trig);
-	if(status != 0) return status;
-
-	/* disable modules */
-
-	channel_disable(master_dev);
-	if(status != 0) return status;
-
-	channel_disable(slave_dev);
-	if(status != 0) return status;
+    /* return 0 on success */
 
 	return 0;
+
+exit_fail:
+    trigger_deinit(master_dev, slave_dev, &master_trig, &slave_trig);
+    return status;
 }

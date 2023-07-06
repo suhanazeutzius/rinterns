@@ -1,6 +1,5 @@
 #include "syncstream.h"
 
-
 /**
  * initialize and begin a sync rx stream
  *
@@ -19,7 +18,7 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
 
     /* configure sync stream (master) */
 
-    status = bladerf_sync_config(master_dev, BLADERF_RX_X2, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
+    status = bladerf_sync_config(master_dev, BLADERF_RX_X1, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
     if(status != 0){
         fprintf(stderr, "Failed to configure master stream: %s\n", bladerf_strerror(status));
         return status;
