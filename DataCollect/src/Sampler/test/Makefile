@@ -60,9 +60,13 @@ trigger_single: $(SOURCES) Makefile test_trigger_single.c
 trigger_multi: $(SOURCES) Makefile test_trigger_multi.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_multi.c -o ./test
 
-## test trigger syncstream (single)
+## test trigger syncstream (single slave)
 trigger_syncstream: $(SOURCES) Makefile test_trigger_syncstream.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_syncstream.c -o ./test
+
+## test trigger syncstream (single master)
+trigger_syncstream_master: $(SOURCES) Makefile test_trigger_syncstream.c
+	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_trigger_syncstream_master.c -o ./test
 
 ## test syncstream
 syncstream: $(SOURCES) Makefile test_syncstream.c

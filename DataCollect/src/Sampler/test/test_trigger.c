@@ -42,6 +42,23 @@ int test_trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, str
         return -1;
     }
 
+    uint8_t reg;
+    status = bladerf_read_trigger(master_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &reg);
+    if(status != 0){
+        fprintf(stderr, "[master] Failed to read trigger register\n");
+        return -1;
+    }
+
+    if(reg & BLADERF_TRIGGER_REG_MASTER){
+        printf("[master] Master bit set\n");
+    }
+    if(reg & BLADERF_TRIGGER_REG_FIRE){
+        printf("[master] Fire bit set\n");
+    }
+    if(reg & BLADERF_TRIGGER_REG_ARM){
+        printf("[master] Arm bit set\n");
+    }
+
     /* check trigger state (slave) */
 
     status = bladerf_trigger_state(slave_dev, slave_trig, &is_armed, &has_fired, &fire_requested, NULL, NULL);
@@ -66,6 +83,22 @@ int test_trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, str
         return -1;
     }
 
+    status = bladerf_read_trigger(slave_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &reg);
+    if(status != 0){
+        fprintf(stderr, "[slave] Failed to read trigger register\n");
+        return -1;
+    }
+
+    if(reg & BLADERF_TRIGGER_REG_MASTER){
+        printf("[slave] Master bit set\n");
+    }
+    if(reg & BLADERF_TRIGGER_REG_FIRE){
+        printf("[slave] Fire bit set\n");
+    }
+    if(reg & BLADERF_TRIGGER_REG_ARM){
+        printf("[slave] Arm bit set\n");
+    }
+
     /* return 0 on success */
     
     return 0;
@@ -75,7 +108,7 @@ int test_trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, str
 
 
 
-int test_trigger_fire(struct bladerf *master_dev, struct bladerf_trigger *master_trig){
+int test_trigger_fire(struct bladerf *master_dev, struct bladerf *slave_dev, struct bladerf_trigger *master_trig){
 
     int status;
 
@@ -199,7 +232,7 @@ int main(){
     /* test trigger_fire() */        
     
     printf("[master] Firing trigger...\n");
-    if(test_trigger_fire(master_dev, &master_trig) != 0){
+    if(test_trigger_fire(master_dev, slave_dev, &master_trig) != 0){
         fprintf(stderr, "[master] Failed to fire trigger\n");
         bladerf_close(master_dev);
         bladerf_close(slave_dev);

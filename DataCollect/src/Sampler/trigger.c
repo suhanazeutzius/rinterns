@@ -27,9 +27,7 @@ int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct b
 		fprintf(stderr, "Failed to initialize master trigger: %s\n", bladerf_strerror(status));
 		return status;
 	}
-	else{
-		master_trig->role = BLADERF_TRIGGER_ROLE_MASTER;
-	}
+	master_trig->role = BLADERF_TRIGGER_ROLE_MASTER;
 
 	/* init slave trigger */
 	bladerf_trigger_init(slave_dev, channel, signal, slave_trig);
@@ -37,9 +35,7 @@ int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct b
 		fprintf(stderr, "Failed to initialie slave trigger: %s\n", bladerf_strerror(status));
 		return status;
 	}
-	else{
-		slave_trig->role = BLADERF_TRIGGER_ROLE_SLAVE;
-	}
+	slave_trig->role = BLADERF_TRIGGER_ROLE_SLAVE;
 
 	/* arm triggers */
 	status = bladerf_trigger_arm(master_dev, master_trig, true, 0, 0);
@@ -91,36 +87,9 @@ int trigger_deinit(struct bladerf *master_dev, struct bladerf *slave_dev, struct
 		return status;
 	}
 
-    /* clear trigger fires */
-//    uint8_t val;
-//    status = bladerf_read_trigger(master_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &val);
-//    if(status != 0){
-//        fprintf(stderr, "Failed to read trigger register (master): %s\n", bladerf_strerror(status));
-//        return status;
-//    }
-//
-//    val &= ~(BLADERF_TRIGGER_REG_FIRE);
-//
-//    status = bladerf_write_trigger(master_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, val);
-//    if(status != 0){
-//        fprintf(stderr, "Failed to write trigger register (master): %s\n", bladerf_strerror(status));
-//        return status;
-//    }
-//
-//
-//    status = bladerf_read_trigger(slave_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, &val);
-//    if(status != 0){
-//        fprintf(stderr, "Failed to read trigger register (slave): %s\n", bladerf_strerror(status));
-//        return status;
-//    }
-//
-//    val &= ~(BLADERF_TRIGGER_REG_FIRE);
-//
-//    status = bladerf_write_trigger(slave_dev, BLADERF_CHANNEL_RX(0), BLADERF_TRIGGER_MINI_EXP_1, val);
-//    if(status != 0){
-//        fprintf(stderr, "Failed to write trigger register (slave): %s\n", bladerf_strerror(status));
-//        return status;
-//    }
+    /* set disabled role */
+    master_trig->role = BLADERF_TRIGGER_ROLE_DISABLED;
+    slave_trig->role = BLADERF_TRIGGER_ROLE_DISABLED;
 
 	return 0;
 }
