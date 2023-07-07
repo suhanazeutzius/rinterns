@@ -20,7 +20,7 @@ sig = makeGPSClean(29, num_periods=2, sample_rate=fsample)
 noise_power_AWGN_dB = 16
 noise_power_AWGN = math.pow(10,(noise_power_AWGN_dB/10))
 sig = makeGPSNoisy(sig, noise_power_AWGN)
-#visualizeSignal(sig, 0, fsample, 'Simulated PRN 13')
+visualizeSignal(sig, 0, fsample, 'Simulated GPS Signal')
 
 # Shift signal up by 5 MHz
 offset = 4e6 # [Hz]

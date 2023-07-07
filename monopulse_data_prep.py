@@ -12,6 +12,13 @@ from flatirons.parse import *
 # Use custom matplotlib styling
 plt.style.use('flatirons/flatirons.mplstyle')
 
+# prepareDataForMonopulse() outputs the data required for the monopulse argument to run
+#
+# Inputs:
+#   file_name        : name of the data file                                     [string]
+#   prn              : PRN that is being tracked                                    [int]
+#   wire_delay       : delay caused by a longer second wire (seconds)             [float]
+#   plot_correlation : option controlling whether to plot the correlation data      [T/F]
 def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
@@ -40,8 +47,8 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     sig1 = trimSignal(sig1, fsample, trim_length=wire_delay)
     
     # Lowpass filter signal
-    sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['butter', 'lowpass'], bandwidth=1e6, order=3)
-    sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['butter', 'lowpass'], bandwidth=1e6, order=3)
+    sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['fir', 'lowpass'], bandwidth=1e6, order=100)
+    sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
     
     # Calculate maximum doppler shift
     Rgps = Rearth + hGPS # [m]
@@ -59,15 +66,15 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     fdoppler = np.mean([fdoppler1, fdoppler2])
     
     # Extract correlation data for monopulse algorithm
-    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1')
-    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2')
+    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)
+    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=True)
 
     # Return data for monopulse algorithm
     return corr1, corr2
 
 if __name__ == "__main__":
     # Define data properties
-    file_name = 'data/Samples_Jul_6/sat12_1009.csv'
+    file_name = 'data/Samples_Jul_6/sat12_1012.csv'
     prn = 12
     plot_correlation = True
     wire_delay = 7.13e-9

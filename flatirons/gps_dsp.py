@@ -21,16 +21,13 @@ from flatirons.gps_gen import *
 #                  correlation plots
 #
 # Outputs:
-#   corr0        : correlation coefficient vector when   [numpy array of type float]
-#                  data bit = 0
-#   corr1        : correlation coefficient vector when   [numpy array of type float]
-#                  data bit = 1
+#   corr         : correlation coefficient vector     [numpy array of type complex_]
 def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
     ca = makeGPSClean(prn, num_periods=2, sample_rate=sample_rate)
 
     # Perform correlation
-    corr = np.abs(scipy.signal.correlate(ca, signal))
+    corr = scipy.signal.correlate(ca, signal)
 
     # Create shift vector
     max_shift = int((len(ca)+len(signal)-2)/2)
@@ -122,19 +119,22 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 # correlateSignal() performs correlation analysis on a GPS signal
 #
 # Inputs:
-#   signal      : signal that is being correlated  [numpy array of type np.complex_]
-#   fsample     : sampling rate of signal in Hz                              [float]
-#   signal_name : signal name (for plotting)                                [string]
-#   fdoppler    : maximum possible doppler shift in Hz                       [float]
-#   freq_step   : frequency step size for correlation algorithm in Hz        [float]
-#   prns        : prns to test in correlation algorithm           [list of type int]
-#   freq_range  : optional argument to overwrite range of       [list of type float]
-#                 frequencies to test (Hz)
-#   plot        : parameter controlling whether to display individual          [T/F]
-#                  correlation plots
+#   signal              : signal that is being     [numpy array of type np.complex_]
+#                         correlated
+#   fsample             : sampling rate of signal in Hz                      [float]
+#   signal_name         : signal name (for plotting)                        [string]
+#   fdoppler            : maximum possible doppler shift in Hz               [float]
+#   freq_step           : frequency step size for correlation algorithm (Hz) [float]
+#   prns                : prns to test in correlation algorithm   [list of type int]
+#   freq_range          : optional argument to overwrite range  [list of type float]
+#                         of frequencies to test (Hz)
+#   plot...             : parameters controlling whether to display various    [T/F]
+#                         plots
 #
 # Outputs:
-#   corr        : DEPRECATED
+#   prn                 : prn of signal with maximum correlation peak          [int]
+#   fdoppler_correction : doppler frequency shift of signal with maximum     [float]
+#                         correlation peak
 def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot_CAF=True, plot_each=False, plot_3D=False):
     # Define constants
     c = 299792458 # [m/s]
@@ -171,6 +171,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
 
             # Correlate signal with C/A code corresponding to current prn
             corr = correlateWithGPS(prn, signal_shifted, signal_name, freq=freq, sample_rate=sample_rate, plot=plot_each)
+            corr = np.abs(corr)
  
             # Save correlation data
             if plot_3D:
@@ -211,7 +212,20 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
     # Return results
     return prn, fdoppler_correction
 
-def correlateForMonopulse(sig, fsample, fdoppler_correction, prn, signal_name, plot=False):
+# correlateForMonopulse() returns the correlation results required by the monopulse algorithm
+#
+# Inputs:
+#   sig                 : GPS signal                  [numpy array of type complex_]
+#   fsample             : sampling rate in Hz                                [float]
+#   fdoppler_correction : doppler frequency shift of the signal in Hz        [float]
+#   prn                 : PRN that is being tracked                            [int]
+#   signal_name         : name of the signal                                [string]
+#   plot                : parameter controlling whether to display             [T/F]
+#                         individual correlation plots
+#
+# Returns:
+#   corr                : correlation results         [numpy array of type complex_]
+def correlateForMonopulse(sig, fsample, fdoppler, prn, signal_name, plot=False):
     # Update sample_rate variable
     if fsample == 1.023e6:
         sample_rate = None
@@ -220,10 +234,10 @@ def correlateForMonopulse(sig, fsample, fdoppler_correction, prn, signal_name, p
     
     # Shift signal by doppler shift frequency
     t = np.linspace(0, len(sig)/fsample, num=len(sig), endpoint=False)
-    sig = sig * np.exp(-1j*2*np.pi*fdoppler_correction*t)
+    sig = sig * np.exp(-1j*2*np.pi*fdoppler*t)
 
     # Correlate signal with C/A code corresponding to tracked  prn
-    corr = correlateWithGPS(prn, sig, signal_name, freq=fdoppler_correction, sample_rate=sample_rate, plot=plot)
+    corr = correlateWithGPS(prn, sig, signal_name, freq=fdoppler, sample_rate=sample_rate, plot=plot)
 
     # Return correlation results
     return corr
