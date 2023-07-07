@@ -37,18 +37,18 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     # Read in data
     I1, Q1, I2, Q2 = csv_parse(file_name)
     sig1 = I1 + 1j*Q1
-    sig2 = I2 + 1j*Q2
+    # sig2 = I2 + 1j*Q2
     
     # Remove first 2 ms of signal
     sig1 = trimSignal(sig1, fsample)
-    sig2 = trimSignal(sig2, fsample)
+    # sig2 = trimSignal(sig2, fsample)
     
     # Remove wire delay from faster channel
     sig1 = trimSignal(sig1, fsample, trim_length=wire_delay)
     
     # Lowpass filter signal
     sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['fir', 'lowpass'], bandwidth=1e6, order=100)
-    sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
+    # sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
     
     # Calculate maximum doppler shift
     Rgps = Rearth + hGPS # [m]
@@ -61,9 +61,13 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     prns = [prn]
     _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
     print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
-    _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
-    fdoppler = np.mean([fdoppler1, fdoppler2])
+    # _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+    # print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
+    # fdoppler = np.mean([fdoppler1, fdoppler2])
+    fdoppler = fdoppler1
+
+    phase2 = np.deg2rad(10)
+    sig2 = [sig1[i] * np.exp(phase2 * 1j) for i in range(len(sig1))]
     
     # Extract correlation data for monopulse algorithm
     corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)

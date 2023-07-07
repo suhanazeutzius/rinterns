@@ -5,69 +5,6 @@ from scipy import signal, fftpack
 from monopulse_data_prep import *
 
 
-def noisy_signal_gen(phi, prn=13):
-    """
-    Generate a BPSK modulated signal & phase shifted signal
-    with noise added
-
-    :param: radian: phase shift for the second signal
-    :returns tuple of numpy arrays: (signal, shifted signal)
-    """
-
-    SNR = 16  # dB
-    SNR_gain = pow(10, 16 / 20)
-
-    signal, shifted_signal = signal_gen(phi, prn)
-
-    noise = np.random.normal(0, 1, len(signal))
-    signal = [(SNR_gain) * signal[i] + noise[i] for i in range(len(signal))]
-    shifted_signal = [shifted_signal[i] + (SNR_gain * noise[i]) for i in range(len(shifted_signal))]
-
-    return signal, shifted_signal
-
-
-def signal_gen(phi, prn=13):
-    """
-    Generate a BPSK modulated signal & phase shfited version of it
-
-    :param: radian: phase shift for the second signal
-    :returns tuple of numpy arrays: (signal, shifted signal)
-    """
-
-    F_brf_sample = 61.44e6  # Hz
-    numseconds = 2048e-6  # s
-
-    bits = cacode(prn)
-    numbits = 1023
-    chip_rate = 1.023e6  # Hz
-    F_c = 1575e6  # Hz
-
-    t = np.linspace(0, numseconds, int(numseconds * (F_brf_sample)))
-
-    s0 = [np.cos(2 * np.pi * F_c * x) for x in t]
-    s1 = [np.cos((2 * np.pi * F_c * x) + np.pi / 2) for x in t]
-    signal = []
-
-    s0_shifted = [np.cos((2 * np.pi * F_c * x) + phi) for x in t]
-    s1_shifted = [np.cos((2 * np.pi * F_c * x) + np.pi / 2 + phi) for x in t]
-    shifted_signal = []
-
-    i = 0
-    for bit in bits:
-        if bit == 1:
-            for _ in range(int(numseconds * F_brf_sample) // numbits):
-                signal.append(s1[i])
-                shifted_signal.append(s1_shifted[i])
-                i += 1
-        else:
-            for _ in range(int(numseconds * F_brf_sample) // numbits):
-                signal.append(s0[i])
-                shifted_signal.append(s0_shifted[i])
-                i += 1
-
-    return np.array(signal), np.array(shifted_signal)
-
-
 def __cacode(prn):
     """
     Generate CA Code for any PRN
@@ -195,16 +132,23 @@ def makeGPSSignal(prn_num, sample_ratio, noise=True, plot=False):
     return BPSK_signal
 
 
-# params:
-#   none
-# return:
-#   phase_shift_table: dictionary of expected phase shifts for 2x2 antenna array for every angle in our range
-#       indexed as (elevation angle, azimuth angle)
-def makeLookupTable():
-    phase_shift_table = {}
+def makeLookupTable(d, wavelength, max_el, max_az, step=2):
+    """ ! Generates a lookup table of expected phase shifts between a reference element and all other
+        elements in a 2x2 square array for all angles in our range.
+
+    @param d            The distance between antennas.
+    @param wavelength   The wavelength of the signal to be received
+    @param max_el       The maximum elevation angle to calculate
+    @param max_az       The maximum azimuth angle to calculate
+    @param step         The step size between angles. Defaults to 2
+
+    @return            The dictionary with keys of form (elevation, azimuth) and values of the expected
+                        phase shifts from a reference antenna to all other antennas.
+    """
+    table = {}
     # calculate phase shift for each antenna, using antenna 1 as a reference
-    for elevation_angle in range(0, 27, 2):  # elevation angles
-        for azim_angle in range(0, 360, 2):  # azimuth angles
+    for elevation_angle in range(0, max_el, step):  # elevation angles
+        for azim_angle in range(0, max_az, step):  # azimuth angles
             az_angle = np.deg2rad(azim_angle)
             elev_angle = np.deg2rad(elevation_angle)
             d2 = d * np.cos(az_angle)
@@ -213,21 +157,36 @@ def makeLookupTable():
             p3 = ((2 * np.pi * d3) / wavelength) * np.sin(elev_angle)
             d4 = d * np.sqrt(2) * np.sin(az_angle + np.pi / 4)
             p4 = ((2 * np.pi * d4) / wavelength) * np.sin(elev_angle)
-            phase_shift_table[elevation_angle, azim_angle] = [round(p2, 3), round(p3, 3), round(p4, 3)]
-    return phase_shift_table
+            table[elevation_angle, azim_angle] = [round(p2, 3), round(p3, 3), round(p4, 3)]
+    return table
 
 
-def find_nearest_index(array, value):
+def find_nearest_index(arr, value):
+    """ ! Finds the index of the closest matching value in a table
+
+    @param arr      An array of values to iterate over.
+    @param value    The value to match to something in the array.
+
+    @return         The index of the array with the closest matching value.
+    """
     diffs = []
-    for i in range(0, len(array)):
-        # diff = 0
-        # diff = [diff + np.abs(array[i][j] - value[j]) for j in range(len(value))]
-        diff = np.abs(array[i][0] - value[0]) + np.abs(array[i][1] - value[1]) + np.abs(array[i][2] - value[2])
+    for i in range(0, len(arr)):
+        diff = 0
+        for j in range(len(value)):
+            diff += np.abs(arr[i][j] - value[j])
+        # diff = np.abs(arr[i][0] - value[0]) + np.abs(arr[i][1] - value[1]) + np.abs(arr[i][2] - value[2])
         diffs.append(diff)
     return diffs.index(min(diffs))
 
 
 def calc_phase_shift(sig1, sig2):
+    """ ! Calculates the phase shift between two signals using sum and difference beams.
+
+    @param sig1     Signal defined to have phase shift of 0.
+    @param sig2     Signal to calculate phase shift of with respect to sig1.
+
+    @return         The phase difference between the two input signals.
+    """
     sum_vector = [sig1[i] + sig2[i] for i in range(len(sig1))]
     diff_vector = [sig1[i] - sig2[i] for i in range(len(sig1))]
     sum_avg = np.mean(sum_vector)
@@ -239,6 +198,13 @@ def calc_phase_shift(sig1, sig2):
 
 
 def calc_AoA(signals, lookup_table):
+    """ ! Calculates the angle of arrival from the lookup table.
+
+    @param signals          Array of four received signals.
+    @param lookup_table     Lookup table of expected phase shifts for each angle of arrival.
+
+    @return                 Angle of arrival of the signal. 
+    """
     # split up dictionary into angles and phases
     angle_list = list(lookup_table.keys())
     phase_list = list(lookup_table.values())
@@ -286,23 +252,24 @@ def calc_AoA_monopulse(signals):
 
 
 
+if __name__ == "__main__":
+    # configuration:
+    # 1  2
+    # 3  4
+    wavelength = 1
+    d = wavelength / 2
+    lookup_table = makeLookupTable(d, wavelength, 27, 360)
 
-# configuration:
-# 1  2
-# 3  4
-wavelength = 1
-d = wavelength / 2
-lookup_table = makeLookupTable()
+    sig1 = makeGPSSignal(22, 30)
+    signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
+    print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
+    # a1, a2 = calc_AoA_monopulse(signals)
+    # print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
-# sig1 = makeGPSSignal(22, 30)
-# signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
-# print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
-# a1, a2 = calc_AoA_monopulse(signals)
-# print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
+    sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 12, 8.13e-9, plot_correlation=False)
+    phi = calc_phase_shift(sig1, sig2)
+    print(np.rad2deg(phi))
+    theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))
+    print(np.rad2deg(theta))
 
-sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 12, 7.13e-9, plot_correlation=True)
-phi = calc_phase_shift(sig1, sig2)
-theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))
-print(np.rad2deg(theta))
-
-print("done")
+    print("done")
