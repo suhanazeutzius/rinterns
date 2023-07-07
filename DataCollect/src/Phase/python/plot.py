@@ -49,7 +49,7 @@ signal_name = "sample"
 signal1 = []
 signal2 = []
 
-with open("/home/empire/Desktop/sample2.csv", "r") as csvfile:
+with open("/home/ngolding/Project/rinterns/DataCollect/src/Phase/test/python/sample2.csv", "r") as csvfile:
     reader = csv.reader(csvfile)
 
     for line in reader:
