@@ -66,15 +66,15 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     fdoppler = np.mean([fdoppler1, fdoppler2])
     
     # Extract correlation data for monopulse algorithm
-    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1')
-    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2')
+    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)
+    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=True)
 
     # Return data for monopulse algorithm
     return corr1, corr2
 
 if __name__ == "__main__":
     # Define data properties
-    file_name = 'data/Samples_Jul_6/sat12_1009.csv'
+    file_name = 'data/Samples_Jul_6/sat12_1012.csv'
     prn = 12
     plot_correlation = True
     wire_delay = 7.13e-9

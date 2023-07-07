@@ -238,7 +238,6 @@ def correlateForMonopulse(sig, fsample, fdoppler, prn, signal_name, plot=False):
 
     # Correlate signal with C/A code corresponding to tracked  prn
     corr = correlateWithGPS(prn, sig, signal_name, freq=fdoppler, sample_rate=sample_rate, plot=plot)
-    corr = np.abs(corr)
 
     # Return correlation results
     return corr
