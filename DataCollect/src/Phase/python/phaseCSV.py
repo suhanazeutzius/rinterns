@@ -1,4 +1,5 @@
 import csv
+import numpy as np
 
 def readcsv(filename):
     """read csv data into lists
@@ -75,6 +76,9 @@ def writecsv(filename, signals):
     fout = open(filename, "w")
     csvwriter = csv.writer(fout)
 
+    for i in range(len(signals[0])):
+        csvwriter.writerow([np.real(signals[0][i]), np.imag(signals[0][i]), np.real(signals[1][i]), np.imag(signals[1][i])])
+
     fout.close()
 
     return
@@ -94,3 +98,12 @@ def splitSignals(signals, n):
 
     # TODO
     return None
+
+
+
+
+if __name__ == "__main__":
+
+    s1 = np.arange(0, 100, 1)
+    s2 = np.arange(-100, 0, 1)
+    writecsv("./testcsv.csv", [s1, s2])

@@ -6,7 +6,7 @@ import phaseCSV as CSV
 import phasePlot as PLOT
 
 
-def __sampleDeltaCalculate__(signal1, signal2):
+def __sampleDeltaCalculate__(signal1, signal2, convolve=False):
     """calculates difference in samples between two signals
 
     @param signal1, signal2 -- complex sample signals
@@ -19,31 +19,21 @@ def __sampleDeltaCalculate__(signal1, signal2):
 
     correlation = signal.correlate(signal1, signal2)
     t = np.arange(1-len(signal1), len(signal2))
+
+    if(convolve):
+        fig, ax = plt.subplots(2, 1, sharex=True)
+        ax[0].plot(t, correlation, "b")
+
+        win_size = 2048
+        win = [1/win_size for _ in range(win_size)]
+        avg_correlation = np.convolve(correlation, win, mode='same')
+
+        ax[1].plot(t, avg_correlation, "r")
+        plt.show()
+
     delta_sample = t[np.argmax(correlation)]
     return delta_sample
 
-
-
-
-def __sampleDeltaImpose__(signal1, signal2, sampleoffset):
-    """Apply a sample offset to two signals
-
-    @param signal1,2 -- singals to set offsets of
-    @param sampleoffset -- integer offset bewteen signals in samples
-    @return signal1, signal2 adjusted
-
-    @brief Takes array slices (cuts off leading channel's first samples,
-    cuts off the lagging channel's end samples; this reduces the size of
-    both lists equally)
-    """
-    if(sampleoffset < 0):
-        sampleoffset = np.abs(sampleoffset)
-        signal2 = signal2[sampleoffset:]
-        signal1 = singal2[:(len(signal1) - sampleoffset)]
-    else:
-        signal1 = signal1[sampleoffset:]
-        signal2 = signal2[:(len(signal2) - sampleoffset)]
-    return signal1, signal2
 
 
 
@@ -85,7 +75,7 @@ def __phaseImpose__(signals, phases):
 
 
 
-def phaseCalculator(filename, fsample, fcenter):
+def phaseCalculator(filename, fsample, fcenter, write=False):
     """Calculate phases between channels
 
     @param filename -- csv file to get data from
@@ -103,70 +93,44 @@ def phaseCalculator(filename, fsample, fcenter):
 
     # calculate phase differences & store
     phases = []
-    fout = open("./.phases", "w")
+
+    if(write):
+        fout = open("./.phases", "w")
 
     for i in range(len(signals) - 1):
         phase = __phaseCalculate__(signals[0], signals[i+1], fsample, fcenter)
         phases.append(phase)
-        fout.write(str(phase) + "\n")
+        if(write):
+            fout.write(str(phase) + "\n")
 
-    fout.close()
+    if(write):
+        fout.close()
+
     return phases
 
 
 
 
-def sampleCalculator(filename):
-    """Calculate sample offsets between channels
+def phaseCalculatorAverage(filenames, fsample, fcenter):
+    """calculate phase difference average over multiple 2-channel samples
 
-    @param filename -- csv file to get data from
-    @return list of sample offsets
-
-    @brief
+    @param filenames -- list of filenames to get phase diffs from
+    @fsample -- samplerate of samples in files
+    @fcenter -- tuning frequency of samples in files
+    @return average phase across all files/channels
     """
-    # read csv data
-    signals = CSV.readcsv(filename)
+    phases = []
+    for file in filenames:
 
-    # calculate phase differeence & store
-    samples = []
-    fout = open("./.samples", "w")
+        # read csv data
+        signals = CSV.readcsv(filename)
 
-    for i in range(len(signals) - 1):
-        sampleoffset = __sampleCalculate__(signals[0], signals[i+1])
-        samples.append(sampleoffset)
-        fout.write(str(sampleoffset) + "\n")
+        # calculate phase differences & store
+        phase = __phaseCalculate__(signals[0], signals[1], fsample, fcenter)
+        phases.append(phase)
 
-    fout.close()
-    return samples
+    return np.mean(phases)
 
-
-
-
-def sampleAdjust(filename):
-    """Sample align a file
-
-    @param filename -- csv file to adjust
-    @return sample adjusted signals list
-
-    @brief read data from a csv file and get samples from
-    .samples, align the samples by offsets, then write back
-    the data to the csv file (and return the list of lists)
-    """
-
-    # read csv data
-    signals = CSV.readcsv(filename)
-
-    # get phases
-    fin = open("./.samples", "r")
-    samples = [int(str_samples) for str_samples in fin.readlines()]
-    fin.close()
-
-    # impose sample offsest
-    signals[0], signals[1] = __sampleDeltaImpose__(signals[0], signals[1], samples[0])
-
-    # write back to csv
-#    writecsv(filename, signals)
-    return signals
 
 
 
@@ -202,20 +166,18 @@ def phaseAdjust(filename, fsample, fcenter):
 
 
 
-
 ### MAIN ###
 
 if __name__ == '__main__':
 
-    filename = "./test/sample5.csv"
-    fs = 2.048e6
+    filename = "./bpsk_sample.csv"
+    fs = 20.48e6
     fc = 1575.42e6
 
     signals = CSV.readcsv(filename)
-    print(phaseCalculator(filename, fs, fc))
-
     PLOT.plot(fs, signals[0], signals[1])
 
-    signals = phaseAdjust(filename, fs, fc)
-
-    PLOT.plot(fs, signals[0], signals[1])
+    delta_sample = __sampleDeltaCalculate__(signals[0], signals[1])
+    print("Sample offset: " + str(delta_sample))
+    print("Time offsest (us): " + str(delta_sample/fs))
+    print("Phase offset (deg): " + str(delta_sample*fc*360/fs))
