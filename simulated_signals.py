@@ -22,27 +22,9 @@ noise_power_AWGN = math.pow(10,(noise_power_AWGN_dB/10))
 sig = makeGPSNoisy(sig, noise_power_AWGN)
 visualizeSignal(sig, 0, fsample, 'Simulated GPS Signal')
 
-# Shift signal up by 5 MHz
-offset = 4e6 # [Hz]
-t = np.linspace(0, len(sig)/fsample, num=len(sig), endpoint=False)
-sig = sig * np.exp(1j*2*np.pi*(offset)*t)
-#visualizeSignal(sig, 0, fsample, 'Simulated PRN 13')
-
 # Apply doppler shift
 t = np.linspace(0, len(sig)/fsample, num=len(sig), endpoint=False)
 sig = sig * np.exp(1j*2*np.pi*890*t)
-
-# Bandpass filter signal
-sig = filterSignal(offset, fsample, sig, ['fir', 'bandpass'], bandwidth=1.5e6, order=100)
-#visualizeSignal(signal, fcenter_SDR, fsample, 'Received Signal 6/28/23')
-
-# Tuen filter down to baseband
-sig = tuneSignal(offset, fsample, sig, filter_bandwidth=1e6)
-#visualizeSignal(signal, fGPS, fsample, 'Received Signal 6/28/23')
-
-## Decimate signal
-#sig = scipy.signal.decimate(sig, 10)
-##visualizeSignal(signal, fGPS, fsample, 'Received Signal 6/28/23')
 
 # Define frequencies
 fGPS = 1575.42e6 # [Hz]
