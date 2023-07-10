@@ -6,11 +6,12 @@ import phaseCSV as CSV
 import phasePlot as PLOT
 
 
-def __sampleDeltaCalculate__(signal1, signal2, correlate=False):
+def sampleDeltaCalculate(signal1, signal2, convolve=False):
     """calculates difference in samples between two signals
 
     @param signal1, signal2 -- complex sample signals
     @return sample difference between signals
+    print("Phase offset (deg): " + str(delta_phase))
 
     @brief uses scipy signal cross correlation and finds
     the index where the max occurs with reference to the
@@ -37,7 +38,7 @@ def __sampleDeltaCalculate__(signal1, signal2, correlate=False):
 
 
 
-def __sampleDeltaImpose__(signal1, signal2, sampleoffset):
+def sampleDeltaImpose(signal1, signal2, sampleoffset):
     """Apply a sample offset to two signals
 
     @param signal1,2 -- singals to set offsets of
@@ -51,7 +52,7 @@ def __sampleDeltaImpose__(signal1, signal2, sampleoffset):
     if(sampleoffset < 0):
         sampleoffset = np.abs(sampleoffset)
         signal2 = signal2[sampleoffset:]
-        signal1 = singal2[:(len(signal1) - sampleoffset)]
+        signal1 = signal2[:(len(signal1) - sampleoffset)]
     else:
         signal1 = signal1[sampleoffset:]
         signal2 = signal2[:(len(signal2) - sampleoffset)]
@@ -76,7 +77,7 @@ def sampleCalculator(filename):
     fout = open("./.samples", "w")
 
     for i in range(len(signals) - 1):
-        sampleoffset = __sampleCalculate__(signals[0], signals[i+1])
+        sampleoffset = sampleCalculate(signals[0], signals[i+1])
         samples.append(sampleoffset)
         fout.write(str(sampleoffset) + "\n")
 
@@ -106,7 +107,7 @@ def sampleAdjust(filename):
     fin.close()
 
     # impose sample offsest
-    signals[0], signals[1] = __sampleDeltaImpose__(signals[0], signals[1], samples[0])
+    signals[0], signals[1] = sampleDeltaImpose(signals[0], signals[1], samples[0])
 
     # write back to csv
 #    writecsv(filename, signals)

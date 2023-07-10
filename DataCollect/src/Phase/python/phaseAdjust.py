@@ -4,9 +4,10 @@ from scipy import signal
 
 import phaseCSV as CSV
 import phasePlot as PLOT
+import sampleAdjust as SA
 
 
-def __sampleDeltaCalculate__(signal1, signal2, convolve=False):
+def sampleDeltaCalculate(signal1, signal2):
     """calculates difference in samples between two signals
 
     @param signal1, signal2 -- complex sample signals
@@ -19,25 +20,13 @@ def __sampleDeltaCalculate__(signal1, signal2, convolve=False):
 
     correlation = signal.correlate(signal1, signal2)
     t = np.arange(1-len(signal1), len(signal2))
-
-    if(convolve):
-        fig, ax = plt.subplots(2, 1, sharex=True)
-        ax[0].plot(t, correlation, "b")
-
-        win_size = 2048
-        win = [1/win_size for _ in range(win_size)]
-        avg_correlation = np.convolve(correlation, win, mode='same')
-
-        ax[1].plot(t, avg_correlation, "r")
-        plt.show()
-
     delta_sample = t[np.argmax(correlation)]
     return delta_sample
 
 
 
 
-def __phaseCalculate__(signal1, signal2, fsample, fcenter):
+def phaseCalculate(signal1, signal2, fsample, fcenter):
     """Calculate phase bewteen two signals
 
     @param signal1 -- list of complex samples
@@ -50,14 +39,14 @@ def __phaseCalculate__(signal1, signal2, fsample, fcenter):
     in sample numbers to a difference in time, then to a difference
     in phase (using sample rate and center frequency)
     """
-    delta_t = __sampleDeltaCalculate__(signal1, signal2) / fsample
+    delta_t = sampleDeltaCalculate(signal1, signal2) / fsample
     delta_phase = np.rad2deg((delta_t * 2 * np.pi * fcenter) % 2*np.pi)
     return delta_phase
 
 
 
 
-def __phaseImpose__(signals, phases):
+def phaseImpose(signals, phases):
     """Add phase shift to signals
 
     @param signal -- list of lists of complex samples
@@ -98,7 +87,7 @@ def phaseCalculator(filename, fsample, fcenter, write=False):
         fout = open("./.phases", "w")
 
     for i in range(len(signals) - 1):
-        phase = __phaseCalculate__(signals[0], signals[i+1], fsample, fcenter)
+        phase = phaseCalculate(signals[0], signals[i+1], fsample, fcenter)
         phases.append(phase)
         if(write):
             fout.write(str(phase) + "\n")
@@ -126,7 +115,7 @@ def phaseCalculatorAverage(filenames, fsample, fcenter):
         signals = CSV.readcsv(filename)
 
         # calculate phase differences & store
-        phase = __phaseCalculate__(signals[0], signals[1], fsample, fcenter)
+        phase = phaseCalculate(signals[0], signals[1], fsample, fcenter)
         phases.append(phase)
 
     return np.mean(phases)
@@ -157,7 +146,7 @@ def phaseAdjust(filename, fsample, fcenter):
     fin.close()
 
     # impose phases
-    signals = __phaseImpose__(signals, phases)
+    signals = phaseImpose(signals, phases)
 
     # write back to csv
 #    writecsv(filename, signals)
@@ -170,14 +159,38 @@ def phaseAdjust(filename, fsample, fcenter):
 
 if __name__ == '__main__':
 
-    filename = "./bpsk_sample.csv"
+    figure, ax = plt.subplots(1, 1, sharex=True)
+
+    # inputs
+    filename = "./test/samples/3_25_channeltest.csv"
     fs = 20.48e6
     fc = 1575.42e6
 
+    # calculate signal sample offsets
     signals = CSV.readcsv(filename)
-    PLOT.plot(fs, signals[0], signals[1])
-
-    delta_sample = __sampleDeltaCalculate__(signals[0], signals[1])
+    delta_sample = sampleDeltaCalculate(signals[0], signals[1])
+    delta_t = delta_sample/fs
     print("Sample offset: " + str(delta_sample))
-    print("Time offsest (us): " + str(delta_sample/fs))
-    print("Phase offset (deg): " + str(delta_sample*fc*360/fs))
+    print("Time offsest (us): " + str(delta_t*1e6))
+
+    # get correlation
+    cor1 = signal.correlate(signals[0], signals[1])
+    t1 = np.arange(1-len(signals[0]), len(signals[0]))
+
+    # sample shift and re-calculate sample offsets
+    signals = SA.sampleDeltaImpose(signals[0], signals[1], delta_sample)
+    delta_sample = sampleDeltaCalculate(signals[0], signals[1])
+    delta_t = delta_sample/fs
+    print("Sample offset: " + str(delta_sample))
+    print("Time offsest (us): " + str(delta_t*1e6))
+
+    # plot correlation after adjustment
+    cor2 = signal.correlate(signals[0], signals[1])
+    t2 = np.arange(1-len(signals[0]), len(signals[0]))
+    cor1 = cor1[:len(cor2)]
+    t1 = t1[:len(t2)]
+    ax.plot(t1, cor2, "b", label="Pre-Adjustment")
+    ax.plot(t2, cor2, "r", label="Post-Adjustment")
+    ax.legend()
+
+    plt.show()
