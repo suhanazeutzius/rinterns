@@ -180,7 +180,7 @@ def find_nearest_index(arr, value):
 
 
 def calc_phase_shift(sig1, sig2):
-    """ ! Calculates the phase shift between two signals using sum and difference beams.
+    """ ! Calculates the phase shift between two antennas using sum and difference beams.
 
     @param sig1     Signal defined to have phase shift of 0.
     @param sig2     Signal to calculate phase shift of with respect to sig1.
@@ -266,29 +266,28 @@ def calc_AoA_monopulse(signals):
     return theta_az, theta_el
 
 
-
 if __name__ == "__main__":
-    # configuration:
+    # configuration of antennas:
     # 1  2
     # 3  4
 
     # setup
     wavelength = 1
     d = wavelength / 2
-    lookup_table = makeLookupTable(d, wavelength, 27, 360)
-    sig1 = makeGPSSignal(22, 30)  # generate a reference signal
-    signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
+    # lookup_table = makeLookupTable(d, wavelength, 27, 360)
+    # sig1 = makeGPSSignal(22, 30)  # generate a reference signal
+    # signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
 
     # testing for lookup table implementation
-    aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
-    print("Lookup table: " + str(aoa))
+    # aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
+    # print("Lookup table: " + str(aoa))
 
     # testing for 2D monopulse implementation
     # a1, a2 = calc_AoA_monopulse(signals)
     # print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
     # testing monopulse algorithm with correlation algorithm output
-    sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 12, 8.13e-9, plot_correlation=False)
+    sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 7, 8.13e-9, plot_correlation=False)
     phi = calc_phase_shift(sig1, sig2)
     print("Calculated phase shift: " + str(np.rad2deg(phi)))
     theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))

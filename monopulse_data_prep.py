@@ -12,6 +12,39 @@ from flatirons.parse import *
 # Use custom matplotlib styling
 plt.style.use('flatirons/flatirons.mplstyle')
 
+
+def gen_sim_signals():
+    prns = [1, 7, 13, 22, 27]
+    doppler_shifts = [-500, 1000, 1350, -1830, 400]
+    a1_phase_shifts = [10, 0, -13, 4, 20]
+    a2_phase_shifts = [10, 60, -35, -75, 24]
+    fsample = 10 * 1.023e6  # [Hz]
+    a1_signals = []
+    a2_signals = []
+    for i in range(0, len(prns)):
+        # make clean gps signal
+        sig = makeGPSClean(prns[i], num_periods=2, sample_rate=fsample)
+        # make noisy gps signal
+        noise_power_AWGN_dB = 16
+        noise_power_AWGN = math.pow(10, (noise_power_AWGN_dB / 10))
+        sig = makeGPSNoisy(sig, noise_power_AWGN)
+        # Shift signal by doppler shift frequency
+        t = np.linspace(0, len(sig) / fsample, num=len(sig), endpoint=False)
+        sig = sig * np.exp(-1j * 2 * np.pi * doppler_shifts[i] * t)
+        # shift antenna 1 signal by some phase
+        sig = [sig[j] * np.exp(a1_phase_shifts[i] * 1j) for j in range(len(sig))]
+        a1_signals.append(sig)
+        sig = [sig[j] * np.exp(a2_phase_shifts[i] * 1j) for j in range(len(sig))]
+        a2_signals.append(sig)
+
+    a1_total_signal = np.zeros(len(a1_signals[0]))
+    a2_total_signal = np.zeros(len(a1_signals[0]))
+    for i in range(len(a1_signals)):
+        a1_total_signal = a1_total_signal + a1_signals[i]
+        a2_total_signal = a2_total_signal + a2_signals[i]
+
+    return a1_total_signal, a2_total_signal
+
 # prepareDataForMonopulse() outputs the data required for the monopulse argument to run
 #
 # Inputs:
@@ -47,9 +80,11 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     sig1 = trimSignal(sig1, fsample, trim_length=wire_delay)
     
     # Lowpass filter signal
-    sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['fir', 'lowpass'], bandwidth=1e6, order=100)
+    # sig1 = filterSignal((fGPS-fcenter_SDR), fsample, sig1, ['fir', 'lowpass'], bandwidth=1e6, order=100)
     # sig2 = filterSignal((fGPS-fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
-    
+    #
+
+    sig1, sig2 = gen_sim_signals()
     # Calculate maximum doppler shift
     Rgps = Rearth + hGPS # [m]
     Rsat = np.sqrt((Rearth**2)+(Rgps**2)-(2*Rearth*Rgps*np.cos(max_elevation_angle)))
@@ -61,14 +96,14 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     prns = [prn]
     _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
     print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
-    # _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    # print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
-    # fdoppler = np.mean([fdoppler1, fdoppler2])
-    fdoppler = fdoppler1
+    _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+    print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
+    fdoppler = np.mean([fdoppler1, fdoppler2])
+    # fdoppler = fdoppler1
 
-    phase2 = np.deg2rad(10)
-    sig2 = [sig1[i] * np.exp(phase2 * 1j) for i in range(len(sig1))]
-    print("Expected phase shift (deg): " + str(np.rad2deg(phase2)))
+    # phase2 = np.deg2rad(10)
+    # sig2 = [sig1[i] * np.exp(phase2 * 1j) for i in range(len(sig1))]
+    # print("Expected phase shift (deg): " + str(np.rad2deg(phase2)))
 
     # Extract correlation data for monopulse algorithm
     corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)
