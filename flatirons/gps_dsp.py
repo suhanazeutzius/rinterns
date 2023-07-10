@@ -191,10 +191,15 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
             ax2.set_title('PRN = ' + str(prn))
             plt.show()
 
-    # Extract prn and doppler frequency shift correction corresponding to maximum peak
-    prn_idx, fdoppler_correction_idx = np.where(corr_max == np.amax(np.amax(corr_max)))
-    prn = prns[prn_idx[0]]
-    fdoppler_correction = freq_range[fdoppler_correction_idx[0]]
+    # Test if peak is above correlation threshold
+    if np.amax(np.amax(corr_max)) > 7.5: # Peak is above threshold
+        # Extract prn and doppler frequency shift correction corresponding to maximum peak
+        prn_idx, fdoppler_correction_idx = np.where(corr_max == np.amax(np.amax(corr_max)))
+        prn = prns[prn_idx[0]]
+        fdoppler_correction = freq_range[fdoppler_correction_idx[0]]
+    else: # Peak is not above threshold
+        print("!! ERROR: No correlation peak above threshold !!")
+        return None, None # Return None
 
     if plot_CAF:
         # Finish up plotting
