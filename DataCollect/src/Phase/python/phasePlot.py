@@ -9,18 +9,25 @@ def plot(fsample, signal1, signal2, signal3=None, signal4=None):
     @param fsample -- samplerate of sampled signals
     @return none
     """
-    plt.style.use("flatirons.mplstyle")
+    plt.style.use("/home/ngolding/Project/rinterns/DataCollect/src/Phase/python/flatirons.mplstyle")
+
+    # get number of signals passed
+    numsignals = 2
+    if(signal3):
+        numsignals+=1
+    if(signal4):
+        numsignals+=1
 
     # Plot IQ constellations
-    fig1, ax1 = plt.subplots()
-    ax1.hexbin(np.real(signal1), np.imag(signal1), bins='log', cmap='Blues')
-    ax1.hexbin(np.real(signal2), np.imag(signal2), bins='log', cmap='Greens')
+    fig1, ax1 = plt.subplots(numsignals, 1, sharex=True)
+    ax1[0].hexbin(np.real(signal1), np.imag(signal1), bins='log', cmap='winter')
+    ax1[1].hexbin(np.real(signal2), np.imag(signal2), bins='log', cmap='hot')
     if(signal3):
-        ax1.hexbin(np.real(signal3), np.imag(signal3), bins='log', cmap='Reds')
+        ax1[2].hexbin(np.real(signal3), np.imag(signal3), bins='log', cmap='Reds')
     if(signal4):
-        ax1.hexbin(np.real(signal4), np.imag(signal3), bins='log', cmap='Greys')
-    ax1.set_title('IQ Constellation of Sample')
-    ax1.axis('square')
+        ax1[3].hexbin(np.real(signal4), np.imag(signal3), bins='log', cmap='Greys')
+    ax1[0].set_title('IQ Constellation of Sample')
+    ax1[0].axis('square')
 
 
     # Plot IQ signal time series
