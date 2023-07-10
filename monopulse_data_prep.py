@@ -68,7 +68,8 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
 
     phase2 = np.deg2rad(10)
     sig2 = [sig1[i] * np.exp(phase2 * 1j) for i in range(len(sig1))]
-    
+    print("Expected phase shift (deg): " + str(np.rad2deg(phase2)))
+
     # Extract correlation data for monopulse algorithm
     corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)
     corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=True)

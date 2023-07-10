@@ -134,15 +134,15 @@ def makeGPSSignal(prn_num, sample_ratio, noise=True, plot=False):
 
 def makeLookupTable(d, wavelength, max_el, max_az, step=2):
     """ ! Generates a lookup table of expected phase shifts between a reference element and all other
-        elements in a 2x2 square array for all angles in our range.
+        elements in a 2x2 square array for all angles in range.
 
     @param d            The distance between antennas.
-    @param wavelength   The wavelength of the signal to be received
-    @param max_el       The maximum elevation angle to calculate
-    @param max_az       The maximum azimuth angle to calculate
-    @param step         The step size between angles. Defaults to 2
+    @param wavelength   The wavelength of the signal to be received.
+    @param max_el       The maximum elevation angle to calculate.
+    @param max_az       The maximum azimuth angle to calculate.
+    @param step         The step size between angles. Defaults to 2.
 
-    @return            The dictionary with keys of form (elevation, azimuth) and values of the expected
+    @return            A dictionary with keys of form (elevation, azimuth) and values of the expected
                         phase shifts from a reference antenna to all other antennas.
     """
     table = {}
@@ -203,7 +203,7 @@ def calc_AoA(signals, lookup_table):
     @param signals          Array of four received signals.
     @param lookup_table     Lookup table of expected phase shifts for each angle of arrival.
 
-    @return                 Angle of arrival of the signal. 
+    @return                 Angle of arrival of the signal as a tuple.
     """
     # split up dictionary into angles and phases
     angle_list = list(lookup_table.keys())
@@ -216,7 +216,15 @@ def calc_AoA(signals, lookup_table):
     return angle_list[position]
 
 
-def gen_shifted_signals(sig1, azimuth, elevation):
+def gen_shifted_signals(sig1, elevation, azimuth):
+    """ ! Simulate a phase shifted signal for an incoming wave.
+
+    @param sig1         Reference signal.
+    @param elevation    Elevation angle of incoming wave
+    @param azimuth      Azimuth angle of incoming wave
+
+    @return             Array of four phase shifted signals
+    """
     az_angle_input = np.deg2rad(azimuth)
     elev_angle_input = np.deg2rad(elevation)
     # calculate phase shift for each antenna, using antenna 1 as a reference
@@ -238,6 +246,13 @@ def gen_shifted_signals(sig1, azimuth, elevation):
 
 
 def calc_AoA_monopulse(signals):
+    """ ! Calculates the angle of arrival using 2-D monopulse algorithm.
+
+    @param signals          Array of four received signals.
+
+    @return                 Azimuth angle of the signal.
+    @return                 Elevation angle of the signal.
+    """
     sum_beam = [(signals[0][i] + signals[2][i]) + (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
     delta_az = [(signals[0][i] + signals[2][i]) - (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
     delta_el = [(signals[0][i] - signals[2][i]) + (signals[1][i] - signals[3][i]) for i in range(len(signals[1]))]
@@ -256,20 +271,26 @@ if __name__ == "__main__":
     # configuration:
     # 1  2
     # 3  4
+
+    # setup
     wavelength = 1
     d = wavelength / 2
     lookup_table = makeLookupTable(d, wavelength, 27, 360)
+    sig1 = makeGPSSignal(22, 30)  # generate a reference signal
+    signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
 
-    sig1 = makeGPSSignal(22, 30)
-    signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)
-    print("Lookup table: " + str(calc_AoA(signals, lookup_table)))
+    # testing for lookup table implementation
+    aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
+    print("Lookup table: " + str(aoa))
+
+    # testing for 2D monopulse implementation
     # a1, a2 = calc_AoA_monopulse(signals)
     # print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
+    # testing monopulse algorithm with correlation algorithm output
     sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 12, 8.13e-9, plot_correlation=False)
     phi = calc_phase_shift(sig1, sig2)
-    print(np.rad2deg(phi))
+    print("Calculated phase shift: " + str(np.rad2deg(phi)))
     theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))
-    print(np.rad2deg(theta))
+    print("Calculated elevation angle: " + str(np.rad2deg(theta)))
 
-    print("done")
