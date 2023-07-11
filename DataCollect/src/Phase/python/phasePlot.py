@@ -121,3 +121,12 @@ def correlationPlot(signals, fsample, fcenter, name=""):
     plt.show()
 
     return signals
+
+
+
+
+## MAIN PROGRAM ##
+
+if __name__ == "__main__":
+    signals = CSV.readcsv("./test/samples/sample.csv")
+    plot(20.48e6, signals[0], signals[1], IQ=True, name="Sig-gen RF 1575MHz")
