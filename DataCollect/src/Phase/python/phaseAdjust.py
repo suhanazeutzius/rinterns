@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import signal
 import matplotlib.pyplot as plt
 from scipy import signal
 
@@ -155,42 +156,60 @@ def phaseAdjust(filename, fsample, fcenter):
 
 
 
-### MAIN ###
 
-if __name__ == '__main__':
+def printDeltas(filename, fs, fc):
+    """Print sample and time deltas for a given 2 channel sample csv
 
-    figure, ax = plt.subplots(1, 1, sharex=True)
-
-    # inputs
-    filename = "./test/samples/3_25_channeltest.csv"
-    fs = 20.48e6
-    fc = 1575.42e6
-
+    @param filename -- csv file to read
+    @param fs -- sample rate of sample
+    @return none
+    """
     # calculate signal sample offsets
     signals = CSV.readcsv(filename)
     delta_sample = sampleDeltaCalculate(signals[0], signals[1])
     delta_t = delta_sample/fs
+    delta_phase = np.rad2deg(2 * np.pi * delta_t * fc)
     print("Sample offset: " + str(delta_sample))
     print("Time offsest (us): " + str(delta_t*1e6))
-
-    # get correlation
-    cor1 = signal.correlate(signals[0], signals[1])
-    t1 = np.arange(1-len(signals[0]), len(signals[0]))
+    print("Phase offset (deg): " + str(delta_phase))
 
     # sample shift and re-calculate sample offsets
     signals = SA.sampleDeltaImpose(signals[0], signals[1], delta_sample)
     delta_sample = sampleDeltaCalculate(signals[0], signals[1])
     delta_t = delta_sample/fs
+    delta_phase = np.rad2deg(2 * np.pi * delta_t * fc)
     print("Sample offset: " + str(delta_sample))
     print("Time offsest (us): " + str(delta_t*1e6))
+    print("Phase offset (deg): " + str(delta_phase))
 
-    # plot correlation after adjustment
-    cor2 = signal.correlate(signals[0], signals[1])
-    t2 = np.arange(1-len(signals[0]), len(signals[0]))
-    cor1 = cor1[:len(cor2)]
-    t1 = t1[:len(t2)]
-    ax.plot(t1, cor2, "b", label="Pre-Adjustment")
-    ax.plot(t2, cor2, "r", label="Post-Adjustment")
-    ax.legend()
 
-    plt.show()
+
+
+### MAIN ###
+
+if __name__ == '__main__':
+
+    # inputs
+    filename = "./test/samples/channeltest.csv"
+    fs = 20.48e6
+    fc = 1575.42e6
+
+    signals = CSV.readcsv(filename)
+    PLOT.plot(fs, signals[0], signals[1])
+    signals = PLOT.correlationPlot(filename, fs, fc)
+    printDeltas(filename, fs, fc)
+    PLOT.plot(fs, signals[0], signals[1])
+
+    filename = "./test/samples/3_23_channeltest.csv"
+    signals = CSV.readcsv(filename)
+    PLOT.plot(fs, signals[0], signals[1])
+    signals = PLOT.correlationPlot(filename, fs, fc) 
+    printDeltas(filename, fs, fc)
+    PLOT.plot(fs, signals[0], signals[1])
+
+    filename = "./test/samples/3_25_channeltest.csv"
+    signals = CSV.readcsv(filename)
+    PLOT.plot(fs, signals[0], signals[1])
+    signals = PLOT.correlationPlot(filename, fs, fc)
+    printDeltas(filename, fs, fc)
+    PLOT.plot(fs, signals[0], signals[1])

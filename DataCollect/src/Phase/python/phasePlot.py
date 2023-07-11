@@ -1,7 +1,10 @@
 import matplotlib.pyplot as plt
+from scipy import signal
 import numpy as np
-
 import os
+
+import sampleAdjust as SA
+import phaseCSV as CSV
 
 def plot(fsample, signal1, signal2, signal3=None, signal4=None):
     """Plot two (to four) signals IQ constellation & time behavior
@@ -71,3 +74,52 @@ def plot(fsample, signal1, signal2, signal3=None, signal4=None):
 
     # Display plots
     plt.show()
+
+
+
+
+def correlationPlot(filename, fsample, fcenter):
+    """Plot correlations of a 2 channel sample pre
+    and post sample alignment
+
+    @param filename -- csv file to read
+    @param fsample -- samplerate of sample
+    @param fcenter -- center frequency of sample
+    @return sample offset adjusted signals
+    """
+
+    figure, ax = plt.subplots(1, 1, sharex=True)
+
+    # get signals lists
+    signals = CSV.readcsv(filename)
+
+    # get correlation
+    cor1 = signal.correlate(signals[0], signals[1])
+    t1 = np.arange(1-len(signals[0]), len(signals[0]))
+
+    # get sample delta & impose delta
+    delta_sample = SA.sampleDeltaCalculate(signals[0], signals[1])
+    signals = SA.sampleDeltaImpose(signals[0], signals[1], delta_sample)
+
+    # normalize correlations
+    cor2 = signal.correlate(signals[0], signals[1])
+    sum_cor2 = sum(cor2)
+    cor2 = [i/sum_cor2 for i in cor2]
+    t2 = np.arange(1-len(signals[0]), len(signals[0]))
+
+    cor1 = cor1[:len(cor2)]
+    sum_cor1 = sum(cor1)
+    cor1 = [i/sum_cor1 for i in cor2]
+    t1 = t1[:len(t2)]
+
+    # plot correlations on same axis
+    ax.plot(t1, cor2, "b", label="Pre-Adjustment")
+    ax.plot(t2, cor2, "r", label="Post-Adjustment")
+    ax.legend()
+    ax.set_title("Correlation of BladeRF RX Channels 1 & 2")
+    ax.set_xlabel("Sample Distance from 0")
+    ax.set_ylabel("Normalized Correlation Value")
+
+    plt.show()
+
+    return signals
