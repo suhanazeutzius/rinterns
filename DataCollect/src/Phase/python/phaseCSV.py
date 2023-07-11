@@ -97,8 +97,20 @@ def splitSignals(signals, n):
     """
 
     # TODO
-    return None
+    subsignals = []
 
+    for signal in signals:
+        sublen = len(signal) // n
+        subsignal = []
+
+        for i in range(n):
+            subsignal.append(signal[sublen*i:sublen*(i+1)])
+        subsignals.append(subsignal)
+
+    output = []
+    for i in range(len(subsignals[0])):
+        output.append([subsignal[i] for subsignal in subsignals])
+    return output
 
 
 

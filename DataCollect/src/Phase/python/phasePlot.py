@@ -6,7 +6,7 @@ import os
 import sampleAdjust as SA
 import phaseCSV as CSV
 
-def plot(fsample, signal1, signal2, signal3=None, signal4=None):
+def plot(fsample, signal1, signal2, signal3=None, signal4=None, IQ=False, name="Sample"):
     """Plot two (to four) signals IQ constellation & time behavior
 
     @param signal1,2,3,4 -- complex sample lists (at least 1 and 2 are required)
@@ -23,18 +23,19 @@ def plot(fsample, signal1, signal2, signal3=None, signal4=None):
         numsignals+=1
 
     # Plot IQ constellations
-    fig1, ax1 = plt.subplots(numsignals, 1, sharex=True)
-    ax1[0].hexbin(np.real(signal1), np.imag(signal1), bins='log', cmap='Blues')
-    ax1[0].axis('square')
-    ax1[1].hexbin(np.real(signal2), np.imag(signal2), bins='log', cmap='Reds')
-    ax1[1].axis('square')
-    if(signal3):
-        ax1[2].hexbin(np.real(signal3), np.imag(signal3), bins='log', cmap='Greens')
-        ax1[2].axis('square')
-    if(signal4):
-        ax1[3].hexbin(np.real(signal4), np.imag(signal3), bins='log', cmap='Grays')
-        ax1[3].axis('square')
-    ax1[0].set_title('IQ Constellation of Sample')
+    if(IQ):
+        fig1, ax1 = plt.subplots(numsignals, 1, sharex=True)
+        ax1[0].hexbin(np.real(signal1), np.imag(signal1), bins='log', cmap='Blues')
+        ax1[0].axis('square')
+        ax1[1].hexbin(np.real(signal2), np.imag(signal2), bins='log', cmap='Reds')
+        ax1[1].axis('square')
+        if(signal3):
+            ax1[2].hexbin(np.real(signal3), np.imag(signal3), bins='log', cmap='Greens')
+            ax1[2].axis('square')
+        if(signal4):
+            ax1[3].hexbin(np.real(signal4), np.imag(signal3), bins='log', cmap='Grays')
+            ax1[3].axis('square')
+        ax1[0].set_title('IQ Constellation of ' + str(name))
 
     # Plot IQ signal time series
     dt = 1/fsample
@@ -70,7 +71,7 @@ def plot(fsample, signal1, signal2, signal3=None, signal4=None):
     ax2[1].set_xlabel('Time [ms]')
     ax2[1].legend()
 
-    fig2.suptitle('Time Behavior of Sine Wave Sample')
+    fig2.suptitle('Time Behavior of ' + str(name))
 
     # Display plots
     plt.show()
@@ -78,20 +79,17 @@ def plot(fsample, signal1, signal2, signal3=None, signal4=None):
 
 
 
-def correlationPlot(filename, fsample, fcenter):
+def correlationPlot(signals, fsample, fcenter, name=""):
     """Plot correlations of a 2 channel sample pre
     and post sample alignment
 
-    @param filename -- csv file to read
+    @param signals -- list of lists of complex samples
     @param fsample -- samplerate of sample
     @param fcenter -- center frequency of sample
     @return sample offset adjusted signals
     """
 
     figure, ax = plt.subplots(1, 1, sharex=True)
-
-    # get signals lists
-    signals = CSV.readcsv(filename)
 
     # get correlation
     cor1 = signal.correlate(signals[0], signals[1])
@@ -109,14 +107,14 @@ def correlationPlot(filename, fsample, fcenter):
 
     cor1 = cor1[:len(cor2)]
     sum_cor1 = sum(cor1)
-    cor1 = [i/sum_cor1 for i in cor2]
+    cor1 = [i/sum_cor1 for i in cor1]
     t1 = t1[:len(t2)]
 
     # plot correlations on same axis
-    ax.plot(t1, cor2, "b", label="Pre-Adjustment")
+    ax.plot(t1, cor1, "b", label="Pre-Adjustment")
     ax.plot(t2, cor2, "r", label="Post-Adjustment")
     ax.legend()
-    ax.set_title("Correlation of BladeRF RX Channels 1 & 2")
+    ax.set_title("Correlation of BladeRF RX Channels 1 & 2: " + str(name))
     ax.set_xlabel("Sample Distance from 0")
     ax.set_ylabel("Normalized Correlation Value")
 

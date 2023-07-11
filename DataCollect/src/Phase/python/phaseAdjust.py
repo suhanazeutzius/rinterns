@@ -124,7 +124,6 @@ def phaseCalculatorAverage(filenames, fsample, fcenter):
 
 
 
-
 def phaseAdjust(filename, fsample, fcenter):
     """Phase adjust a file
 
@@ -157,15 +156,14 @@ def phaseAdjust(filename, fsample, fcenter):
 
 
 
-def printDeltas(filename, fs, fc):
+def printDeltas(signals, fs, fc):
     """Print sample and time deltas for a given 2 channel sample csv
 
-    @param filename -- csv file to read
+    @param signals -- list of lists of complex samples
     @param fs -- sample rate of sample
     @return none
     """
     # calculate signal sample offsets
-    signals = CSV.readcsv(filename)
     delta_sample = sampleDeltaCalculate(signals[0], signals[1])
     delta_t = delta_sample/fs
     delta_phase = np.rad2deg(2 * np.pi * delta_t * fc)
@@ -185,9 +183,10 @@ def printDeltas(filename, fs, fc):
 
 
 
-### MAIN ###
+### MAIN PROGRAMS ###
 
-if __name__ == '__main__':
+
+def nonSplitMultiSample():
 
     # inputs
     filename = "./test/samples/channeltest.csv"
@@ -195,21 +194,48 @@ if __name__ == '__main__':
     fc = 1575.42e6
 
     signals = CSV.readcsv(filename)
-    PLOT.plot(fs, signals[0], signals[1])
-    signals = PLOT.correlationPlot(filename, fs, fc)
-    printDeltas(filename, fs, fc)
-    PLOT.plot(fs, signals[0], signals[1])
+    PLOT.plot(fs, signals[0], signals[1], name="Pre-Adjustment")
+    printDeltas(signals, fs, fc)
+    signals = PLOT.correlationPlot(signals, fs, fc)
+    PLOT.plot(fs, signals[0], signals[1], name="Post-Adjustment")
 
     filename = "./test/samples/3_23_channeltest.csv"
     signals = CSV.readcsv(filename)
-    PLOT.plot(fs, signals[0], signals[1])
-    signals = PLOT.correlationPlot(filename, fs, fc) 
-    printDeltas(filename, fs, fc)
-    PLOT.plot(fs, signals[0], signals[1])
+    PLOT.plot(fs, signals[0], signals[1], name="Pre-Adjustment")
+    printDeltas(signals, fs, fc)
+    signals = PLOT.correlationPlot(signals, fs, fc) 
+    PLOT.plot(fs, signals[0], signals[1], name="Post-Adjustment")
 
     filename = "./test/samples/3_25_channeltest.csv"
     signals = CSV.readcsv(filename)
-    PLOT.plot(fs, signals[0], signals[1])
-    signals = PLOT.correlationPlot(filename, fs, fc)
-    printDeltas(filename, fs, fc)
-    PLOT.plot(fs, signals[0], signals[1])
+    PLOT.plot(fs, signals[0], signals[1], name="Pre-Adjustment")
+    printDeltas(signals, fs, fc)
+    signals = PLOT.correlationPlot(signals, fs, fc)
+    PLOT.plot(fs, signals[0], signals[1], name="Post-Adjustment")
+
+
+
+
+def splitSingleSample(plot=False):
+
+    filename = "./test/samples/3_23_channeltest.csv"
+    fs = 20.48e6
+    fc = 1575.42e6
+
+    rawsignals = CSV.readcsv(filename)
+    splitsignals = CSV.splitSignals(rawsignals, 10)
+    for signals in splitsignals:
+        if(plot):
+            PLOT.plot(fs, signals[0], signals[1], name="Pre-Adjustment")
+            signals = PLOT.correlationPlot(signals, fs, fc, name="Pre-Adjustment")
+        else:
+            delta_sample = SA.sampleDeltaCalculate(signals[0], signals[1])
+            signals = SA.sampleDeltaImpose(signals[0], signals[1], delta_sample)
+        printDeltas(signals, fs, fc)
+        if(plot):
+            PLOT.plot(fs, signals[0], signals[1], name="Post-Adjustment")
+
+
+
+if __name__ == '__main__':
+    nonSplitMultiSample()
