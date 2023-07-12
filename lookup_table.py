@@ -3,10 +3,14 @@ import matplotlib.pyplot as plt
 import scipy.signal
 from scipy import signal, fftpack
 from monopulse_data_prep import *
+import math
 # Import custom python packages
 from flatirons.gps_gen import *
 from flatirons.gps_dsp import *
 from flatirons.parse import *
+
+# Use custom matplotlib styling
+plt.style.use('flatirons/flatirons.mplstyle')
 
 
 def makeLookupTable(d, wavelength, max_el, max_az, step=2):
@@ -131,6 +135,8 @@ def calc_AoA_monopulse(signals):
 
     @return                 Azimuth angle of the signal.
     @return                 Elevation angle of the signal.
+
+    @note fully broken
     """
     sum_beam = [(signals[0][i] + signals[2][i]) + (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
     delta_az = [(signals[0][i] + signals[2][i]) - (signals[1][i] + signals[3][i]) for i in range(len(signals[1]))]
@@ -145,32 +151,57 @@ def calc_AoA_monopulse(signals):
     return theta_az, theta_el
 
 
-def calc_corr_phase_shift(corr1, corr2):
+def calc_corr_phase_shift(corr1, corr2, plot_corr = False):
+    """ ! Calculates the phase shift between two antennas using the phases of their correlation vectors.
+
+    @param corr1     Correlation output of reference antenna
+    @param corr2     Correlation output of second antenna
+
+    @return         The phase difference between the two correlation vectors.
+    """
     corr1_abs = np.abs(corr1)
     corr2_abs = np.abs(corr2)
     c1 = corr1_abs / np.median(corr1_abs)
     c2 = corr2_abs / np.median(corr2_abs)
 
     c1_index = np.array(corr1_abs).argmax()
-    c2_index = np.array(corr2_abs).argmax()
+    # make sure comparing the same peaks
+    c2_index = np.array(corr2_abs[c1_index-5:c1_index+6]).argmax() + (c1_index - 5)
 
-    print(c1_index)
-    print(c2_index)
+    # print(c1_index)
+    # print(c2_index)
+    print("Corr1[" + str(c1_index) + "]: " + str(corr1[c1_index]))
+    print("Corr2[" + str(c2_index) + "]: " + str(corr2[c2_index]))
 
-    fig2, ax2 = plt.subplots()
-    ax2.plot(range(len(c1)), c1)
-    ax2.plot(range(len(c2)), c2, '--')
-    plt.title("absolute value of correlations")
-    plt.show()
+    if plot_corr:
+        fig2, ax2 = plt.subplots()
+        ax2.plot(range(len(c2)), c2, '--')
+        ax2.plot(range(len(c1)), c1)
+        plt.title("absolute value of correlations")
+        plt.show()
 
-    phase_corr1 = np.arctan(np.imag(corr1[c1_index]) / np.real(corr1[c1_index]))
-    phase_corr2 = np.arctan(np.imag(corr2[c2_index]) / np.real(corr2[c2_index]))
+    phase_corr1 = np.angle(corr1[c1_index])
+    phase_corr2 = np.angle(corr2[c2_index])
+    print("Phase channel 1: " + str(np.rad2deg(phase_corr1)))
+    print("Phase channel 2: " + str(np.rad2deg(phase_corr2)))
 
     phase_diff = phase_corr1 - phase_corr2
+    if(phase_diff < -np.pi and phase_diff > (-2 * np.pi)):
+        phase_diff += (2 * np.pi)
+    elif(phase_diff > np.pi and phase_diff < (2 * np.pi)):
+        phase_diff -= (2 * np.pi)
+
     return phase_diff
 
 
 def calc_AoA_corr(corrs, lookup_table):
+    """ ! Calculates the angle of arrival from the lookup table.
+
+    @param corrs            Array of four correlation vectors for a specific PRN.
+    @param lookup_table     Lookup table of expected phase shifts for each angle of arrival.
+
+    @return                 Angle of arrival of the signal as a tuple.
+    """
     # split up dictionary into angles and phases
     angle_list = list(lookup_table.keys())
     phase_list = list(lookup_table.values())
@@ -190,30 +221,29 @@ if __name__ == "__main__":
     # setup
     wavelength = 1
     d = wavelength / 2
-    lookup_table = makeLookupTable(d, wavelength, 27, 360, step=1)
+    lookup_table = makeLookupTable(d, wavelength, 27, 360, step=2)
     # sig1 = makeGPSClean(7, num_periods=2, sample_rate=2.046e6)  # generate a reference signal
     # signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
-    # sig2 = [sig1[i] * np.exp(np.pi/4 * 1j) for i in range(len(sig1))] # generate a reference signal
-    # ph = calc_phase_shift(sig1, sig2)
-    # print(np.rad2deg(ph))
 
-    # testing for lookup table implementation
+    # # testing for lookup table implementation
     # aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
     # print("Lookup table: " + str(aoa))
 
-    # testing for 2D monopulse implementation
+    # # testing for 2D monopulse implementation
     # a1, a2 = calc_AoA_monopulse(signals)
     # print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
-    # testing monopulse algorithm with correlation algorithm output
-    corr1, corr2, corr3, corr4 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1012.csv', 1, 8.13e-9, plot_correlation=False)
+    # # testing monopulse algorithm with simulated correlation algorithm output
+    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(27)
+    # correlations = [corr1, corr2, corr3, corr4]
+    # print(calc_AoA_corr(correlations, lookup_table))
 
-    # phase_diff = calc_corr_phase_shift(corr1, corr2)
-    # print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
-    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
-    # # theta_exp = np.arcsin((np.deg2rad(-45) * wavelength) / (2 * np.pi * d))
-    # # print("Expected elevation angle: " + str(np.rad2deg(theta_exp)))
-    # print("Calculated elevation angle: " + str(np.rad2deg(theta)))
-
-    correlations = [corr1, corr2, corr3, corr4]
-    print(calc_AoA_corr(correlations, lookup_table))
+    # testing on real data
+    phase_ch_2 = np.deg2rad(25)
+    wire_delay = np.deg2rad(-165)
+    corr1, corr2 = prepareDataForMonopulse('data/Samples_Jul_12/18_monopulse.csv', 18, wire_delay, False, phase_ch_2)
+    phase_diff = calc_corr_phase_shift(corr1, corr2)
+    print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
+    # phase_diff = (2 * np.pi) + phase_diff
+    theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    print("Calculated elevation angle: " + str(np.rad2deg(theta)))
