@@ -71,7 +71,10 @@ def gen_sim_signals():
 #   prn              : PRN that is being tracked                                    [int]
 #   wire_delay       : delay caused by a longer second wire (seconds)             [float]
 #   plot_correlation : option controlling whether to plot the correlation data      [T/F]
-def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
+#   rx2_offset       : hardware phase offset of channel 2 (radians)               [float]
+#   rx3_offset       : hardware phase offset of channel 3 (radians)               [float]
+#   rx4_offset       : hardware phase offset of channel 4 (radians)               [float]
+def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, rx2_offset, rx3_offset, rx4_offset):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
     fsample = 2.048e6 # [Hz]
@@ -97,6 +100,17 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     #
     # # Remove wire delay from faster channel
     # sig1 = trimSignal(sig1, fsample, trim_length=wire_delay)
+
+    # # Remove phase offset between channels
+    # sig2_corrected = [sig2[i] * np.exp(-rx2_offset * 1j) for i in range(len(sig2))]
+    # sig2 = np.array(sig2_corrected)
+    # del sig2_corrected
+    # sig3_corrected = [sig3[i] * np.exp(-rx3_offset * 1j) for i in range(len(sig3))]
+    # sig3 = np.array(sig3_corrected)
+    # del sig3_corrected
+    # sig4_corrected = [sig4[i] * np.exp(-rx4_offset * 1j) for i in range(len(sig4))]
+    # sig4 = np.array(sig4_corrected)
+    # del sig4_corrected
 
     sig1, sig2, sig3, sig4 = gen_sim_signals()
     # sig1 = makeGPSClean(7, num_periods=2, sample_rate=2.046e6)  # generate a reference signal
