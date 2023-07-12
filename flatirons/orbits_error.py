@@ -17,7 +17,7 @@ def get_overhead_satellites(t, tle_file, field_of_view, receiver_latlon, debug=F
         # Display which satellites were loaded
         print("Loaded", len(satellites), "satellites:")
         for prn in prn_dict.keys():
-            print("PRN " + str(prn))
+            print("PRN " + str(prn) + " | days away from epoch: " + str(t-prn_dict[prn].epoch))
 
     # Create object to store receiver position
     receiver = wgs84.latlon(receiver_latlon[0], receiver_latlon[1])
@@ -38,13 +38,13 @@ def get_overhead_satellites(t, tle_file, field_of_view, receiver_latlon, debug=F
 
             # Plot satellite
             if el <= field_of_view:
-                ax.scatter(az.degrees, el, s=50, color='#DBB40C', zorder=2)
-                ax.annotate(prn, (az.degrees, el+7), color='#DBB40C', fontweight='bold', zorder=2)
+                ax.scatter(np.deg2rad(az.degrees), el, color='#DBB40C', zorder=2)
+                ax.annotate(prn, (np.deg2rad(az.degrees), el+3), color='#DBB40C', fontweight='bold', zorder=2)
             else:
-                ax.scatter(az.degrees, el, s=50, color='#C0C0C0')
+                ax.scatter(np.deg2rad(az.degrees), el, color='#C0C0C0')
 
     # Plot FOV
-    theta = np.linspace(0, 360, num=1000)
+    theta = np.linspace(0, 2*np.pi, num=1000)
     r = field_of_view*np.ones(1000)
     ax.plot(theta, r, zorder=1)
 
