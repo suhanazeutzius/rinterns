@@ -3,133 +3,10 @@ import matplotlib.pyplot as plt
 import scipy.signal
 from scipy import signal, fftpack
 from monopulse_data_prep import *
-
-
-def __cacode(prn):
-    """
-    Generate CA Code for any PRN
-
-    :param int prn: satellite PRN (1-32)
-    :returns numpy array: 1023 element ca code for chosen SV
-    """
-
-    def _get_g2s(prn):
-        # Shifts for PRNs can be used as g2s[prn]. pnr=0 is not valid. For EGNOS and WAAS use g2s[prn - 87]
-        g2s = np.array(
-            [0, 5, 6, 7, 8, 17, 18, 139, 140, 141, 251, 252, 254, 255, 256, 257, 258, 469, 470, 471, 472, 473,
-             474, 509, 512, 513, 514, 515, 516, 859, 860, 861, 862,
-             # End of GPS following are shift for EGNOS and WASS
-             145, 175, 52, 21, 237, 235, 886, 657, 634, 762, 355, 1012, 176, 603, 130, 359, 595, 68, 386])
-        if 0 < prn <= 32:
-            return g2s[prn]
-        elif 120 <= prn <= 138:
-            return g2s[prn - 87]
-        else:
-            return np.NAN
-            # raise ValueError("PRN {} not allowed. Valid range: [1-32, 120-138]".format(prn))
-
-    g2shift = _get_g2s(prn)
-
-    # Preload registers
-    g1 = np.zeros(1023)
-    reg = -1 * np.ones(10)
-    # Generate G1 signal chips
-    for i in range(1023):
-        g1[i] = reg[9]
-        sBit = reg[2] * reg[9]
-        reg[1:10] = reg[0:9]
-        reg[0] = sBit
-
-    # Generate G2 code
-    g2 = np.zeros(1023)
-    reg = -1 * np.ones(10)
-    # Generate G2 chips
-    for i in range(1023):
-        g2[i] = reg[9]
-        sBit = reg[1] * reg[2] * reg[5] * reg[7] * reg[8] * reg[9]
-        reg[1:10] = reg[0:9]
-        reg[0] = sBit
-    # shift G2 code
-
-    g2 = np.concatenate((g2[(1022 - g2shift + 1):1023], g2[0:(1023 - g2shift)]))
-    return -np.multiply(g1, g2)
-
-
-def cacode(prn, sample_rate=None):
-    """
-    Return cacode with oversampled rate.
-    param prns int, prn # to generate cacode for
-    param sample_rate: float, default = 1.023e6, Sample rate for prncode output
-    :return: numpy array, PRN code for given sample rate
-    """
-
-    if sample_rate is None:
-        return __cacode(prn)
-    samplesPerCode = round(sample_rate / 1.023e6 / 1023)
-    ts = 1 / sample_rate  # Sampling period
-    tc = 1 / 1.023e6  # Code period
-
-    ca_code = cacode(prn)
-    codevalueind = np.ceil(ts * np.arange(1, samplesPerCode + 1) / tc).astype(int) - 1
-    codevalueind[-1] = 1022  # fix last index
-    return ca_code[codevalueind]
-
-
-# Define function to generate GPS IQ signal
-def makeGPSSignal(prn_num, sample_ratio, noise=True, plot=False):
-    # Generate PRN (C/A) code
-    prn = cacode(prn_num)
-
-    # Convert PRN code to 0s and 1s
-    prn = (prn > 0).astype(int)
-
-    # Generate vector for data bit
-    data_bit = 1
-    if data_bit == 0:
-        dat = np.zeros(len(prn))
-    elif data_bit == 1:
-        dat = np.ones(len(prn))
-    dat = dat.astype(int)
-
-    # Perform modulo-2 addition
-    comp_binary_signal = np.zeros(len(prn))
-    for i in np.arange(len(comp_binary_signal)):
-        if prn[i] == dat[i]:
-            comp_binary_signal[i] = 0
-        else:
-            comp_binary_signal[i] = 1
-    comp_binary_signal = comp_binary_signal.astype(int)
-
-    # Perform BPSK modulation and convert to IQ data
-    I = np.ones(len(comp_binary_signal))
-    I[comp_binary_signal == 1] = -1
-    Q = np.zeros(len(comp_binary_signal))
-    BPSK_signal = I + 1j * Q
-
-    # Tile signal
-    BPSK_signal = np.tile(BPSK_signal, 2)
-
-    # Resample signal up to bladeRF sampling frequency
-    downsample = 2
-    BPSK_signal = scipy.signal.resample_poly(BPSK_signal, sample_ratio * downsample, downsample)
-
-    if noise:
-        # Add noise to BPSK signal
-        n = (np.random.randn(len(BPSK_signal)) + 1j * np.random.randn(len(BPSK_signal)) / np.sqrt(2))
-        noise_power = 0.5
-        BPSK_signal = BPSK_signal + (n * np.sqrt(noise_power))
-        phase_noise = np.random.randn(len(BPSK_signal)) * 0.5
-        BPSK_signal = BPSK_signal * np.exp(1j * phase_noise)
-
-    if plot:
-        # Plot IQ constellation of signal
-        plt.plot(np.real(BPSK_signal), np.imag(BPSK_signal), '.')
-        plt.grid(True)
-        plt.title("IQ Constellation for PRN " + str(prn_num))
-        plt.show()
-
-    # Return signal
-    return BPSK_signal
+# Import custom python packages
+from flatirons.gps_gen import *
+from flatirons.gps_dsp import *
+from flatirons.parse import *
 
 
 def makeLookupTable(d, wavelength, max_el, max_az, step=2):
@@ -225,6 +102,8 @@ def gen_shifted_signals(sig1, elevation, azimuth):
 
     @return             Array of four phase shifted signals
     """
+    wavelength = 1
+    d = wavelength / 2
     az_angle_input = np.deg2rad(azimuth)
     elev_angle_input = np.deg2rad(elevation)
     # calculate phase shift for each antenna, using antenna 1 as a reference
@@ -266,6 +145,43 @@ def calc_AoA_monopulse(signals):
     return theta_az, theta_el
 
 
+def calc_corr_phase_shift(corr1, corr2):
+    corr1_abs = np.abs(corr1)
+    corr2_abs = np.abs(corr2)
+    c1 = corr1_abs / np.median(corr1_abs)
+    c2 = corr2_abs / np.median(corr2_abs)
+
+    c1_index = np.array(corr1_abs).argmax()
+    c2_index = np.array(corr2_abs).argmax()
+
+    print(c1_index)
+    print(c2_index)
+
+    fig2, ax2 = plt.subplots()
+    ax2.plot(range(len(c1)), c1)
+    ax2.plot(range(len(c2)), c2, '--')
+    plt.title("absolute value of correlations")
+    plt.show()
+
+    phase_corr1 = np.arctan(np.imag(corr1[c1_index]) / np.real(corr1[c1_index]))
+    phase_corr2 = np.arctan(np.imag(corr2[c2_index]) / np.real(corr2[c2_index]))
+
+    phase_diff = phase_corr1 - phase_corr2
+    return phase_diff
+
+
+def calc_AoA_corr(corrs, lookup_table):
+    # split up dictionary into angles and phases
+    angle_list = list(lookup_table.keys())
+    phase_list = list(lookup_table.values())
+    # calculate phase shifts
+    phase12 = calc_corr_phase_shift(corrs[0], corrs[1])
+    phase13 = calc_corr_phase_shift(corrs[0], corrs[2])
+    phase14 = calc_corr_phase_shift(corrs[0], corrs[3])
+    position = find_nearest_index(phase_list, [round(phase12, 3), round(phase13, 3), round(phase14, 3)])
+    return angle_list[position]
+
+
 if __name__ == "__main__":
     # configuration of antennas:
     # 1  2
@@ -274,9 +190,12 @@ if __name__ == "__main__":
     # setup
     wavelength = 1
     d = wavelength / 2
-    # lookup_table = makeLookupTable(d, wavelength, 27, 360)
-    # sig1 = makeGPSSignal(22, 30)  # generate a reference signal
+    lookup_table = makeLookupTable(d, wavelength, 27, 360, step=1)
+    # sig1 = makeGPSClean(7, num_periods=2, sample_rate=2.046e6)  # generate a reference signal
     # signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
+    # sig2 = [sig1[i] * np.exp(np.pi/4 * 1j) for i in range(len(sig1))] # generate a reference signal
+    # ph = calc_phase_shift(sig1, sig2)
+    # print(np.rad2deg(ph))
 
     # testing for lookup table implementation
     # aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
@@ -287,9 +206,14 @@ if __name__ == "__main__":
     # print("Monopulse: (" + str(a2) + ", " + str(a1) + ")")
 
     # testing monopulse algorithm with correlation algorithm output
-    sig1, sig2 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1009.csv', 7, 8.13e-9, plot_correlation=False)
-    phi = calc_phase_shift(sig1, sig2)
-    print("Calculated phase shift: " + str(np.rad2deg(phi)))
-    theta = np.arcsin((phi * wavelength) / (2 * np.pi * d))
-    print("Calculated elevation angle: " + str(np.rad2deg(theta)))
+    corr1, corr2, corr3, corr4 = prepareDataForMonopulse('data/Samples_Jul_6/sat12_1012.csv', 1, 8.13e-9, plot_correlation=False)
 
+    # phase_diff = calc_corr_phase_shift(corr1, corr2)
+    # print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
+    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    # # theta_exp = np.arcsin((np.deg2rad(-45) * wavelength) / (2 * np.pi * d))
+    # # print("Expected elevation angle: " + str(np.rad2deg(theta_exp)))
+    # print("Calculated elevation angle: " + str(np.rad2deg(theta)))
+
+    correlations = [corr1, corr2, corr3, corr4]
+    print(calc_AoA_corr(correlations, lookup_table))
