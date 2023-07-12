@@ -72,12 +72,82 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     # Return data for monopulse algorithm
     return corr1, corr2
 
+
+
+def getPhaseOffset(ch1, ch2):
+    """Get phase offset between two channels
+
+    @param ch1, ch2 -- complex correlation time output for ch1 and ch2
+    @return list of phase offsets calculated from peaks above threshold
+    """
+    phaseOffsets = []
+    threshold = 38000
+
+    for i in range(len(ch1)):
+        if(ch1[i] > threshold):
+            p1 = np.arctan(np.imag(ch1[i]) / np.real(ch1[i]))
+            p2 = np.arctan(np.imag(ch2[i]) / np.real(ch2[i]))
+#            p1 = np.angle(ch1[i])
+#            p2 = np.angle(ch2[i])
+            phaseOffsets.append(p2 - p1)
+
+    return phaseOffsets
+
+
+def combineDevices(filename1, filename2, fileout):
+    """Combine a master & a slave csv to a single file
+
+    @param filename1 -- input file 1 (will be first in line)
+    @param filename2 -- input file 2 (will be second in line)
+    @param fileout -- output csv file name
+    @return none
+    """
+    import csv
+
+    fout = open(fileout, "w")
+    csvout = csv.writer(fout)
+
+    fin1 = open(filename1, "r") 
+    fin2 = open(filename2, "r")
+
+    csv1 = csv.reader(fin1)
+    csv2 = csv.reader(fin2)
+    
+    lines1 = []
+    lines2 = []
+
+    for line in csv1:
+        lines1.append(line)
+    for line in csv2:
+        line[0] = (' ' + line[0])
+        lines2.append(line)
+
+    for i in range(min(len(lines1), len(lines2))):
+        lines1[i].extend(lines2[i])
+        csvout.writerow(lines1[i])
+
+    fin1.close()
+    fin2.close()
+    fout.close()
+    return
+
+
+## MAIN PROGRAM ##
+
 if __name__ == "__main__":
     # Define data properties
-    file_name = 'data/Samples_Jul_6/sat12_1012.csv'
-    prn = 12
-    plot_correlation = True
-    wire_delay = 7.13e-9
+    combineDevices("/mnt/c/users/ninja/desktop/samples/PRN_5_copper_slave.csv", "/mnt/c/users/ninja/desktop/samples/PRN_5_gray_master.csv", "/mnt/c/users/ninja/desktop/combo.csv")
+
+    file_name = '/mnt/c/users/ninja/desktop/combo.csv'
+    prn = 13
+    plot_correlation = False 
+    wire_delay = 0
     
-    # Call function
     Rx1, Rx2 = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
+    pOffsets = getPhaseOffset(Rx1, Rx2)
+    pOffsets = [np.rad2deg(p) for p in pOffsets]
+    print(pOffsets)
+    print("NUM: " + str(len(pOffsets)))
+    print("MEAN: " + str(np.mean(pOffsets)))
+    print("MEDIAN: " + str(np.median(pOffsets)))
+    print("STD_DEV: " + str(np.std(pOffsets)))
