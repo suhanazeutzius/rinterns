@@ -136,6 +136,16 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, rx2_of
     corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
     corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
 
+    # # Remove wire delay from faster channel
+    # corr2_corrected = [corr2[i] * np.exp(-wire_delay * 1j) for i in range(len(corr2))]
+    # corr2 = np.array(corr2_corrected)
+    # del corr2_corrected
+    #
+    # # Remove phase offset between channels
+    # corr2_corrected = [corr2[i] * np.exp(-rx2_offset * 1j) for i in range(len(corr2))]
+    # corr2 = np.array(corr2_corrected)
+    # del corr2_corrected
+
     # Return data for monopulse algorithm
     return corr1, corr2
 
