@@ -69,6 +69,7 @@ def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug=Fal
     ax.set_theta_zero_location('N')
     ax.set_theta_direction(-1)
     ax.set_rmax(90)
+    ax.set_title('Overhead Satellites')
     fig.savefig('overhead_satellites.png')
     if show_plot:
         plt.show()
@@ -146,9 +147,11 @@ def calcError(t, tle_file, field_of_view, receiver_latlon, direction_estimates, 
     ax.set_theta_direction(-1)
     ax.set_rmax(field_of_view)
     ax.legend(['True Position', 'Estimated Position'])
+    ax.set_title('Comparison of Estimated and True Satellite Positions')
     fig.savefig('satellite_estimates.png')
     if show_plot:
         plt.show()
         
     # Return results
-    return {int(errors[i,0]): errors[i,1:] for i in np.arange(errors.shape[0])}
+    results = {int(errors[i,0]): errors[i,1:] for i in np.arange(errors.shape[0])}
+    return results
