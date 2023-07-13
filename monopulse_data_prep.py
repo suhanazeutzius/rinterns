@@ -58,26 +58,31 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     fdoppler = np.floor(Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
     
     # Perform correlation analysis
+    #global prns
     prns = [prn]
     _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
+    #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
+    print("loading...")
     _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
+    #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
     fdoppler = np.mean([fdoppler1, fdoppler2])
     
     # Extract correlation data for monopulse algorithm
-    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=True)
-    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=True)
+    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
+    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
 
     # Return data for monopulse algorithm
     return corr1, corr2
 
 if __name__ == "__main__":
     # Define data properties
-    file_name = 'data/Samples_Jul_6/sat12_1012.csv'
+    #global prn
+    file_name = 'data/Samples_Jul_6/sat12_1009.csv'
     prn = 12
     plot_correlation = True
     wire_delay = 7.13e-9
     
     # Call function
     Rx1, Rx2 = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
+
+    plt.show()

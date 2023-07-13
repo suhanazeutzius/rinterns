@@ -44,6 +44,7 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
             fig.suptitle('C/A = ' + str(prn) + ' and Fdoppler = ' + str(freq) + ' Hz')
         else:
             fig.suptitle('Correlation of C/A ' + str(prn) + ' and ' + signal_name)
+        # this plots the vector positively and negatively index shifted
         plt.show()
 
     # Return correlation results
@@ -189,7 +190,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
             fig2, ax2 = plt.subplots(subplot_kw={"projection": "3d"})
             ax2.plot_surface(X, Y, corr_mat[:,::1000])
             ax2.set_title('PRN = ' + str(prn))
-            plt.show()
+            #plt.show()
 
     # Extract prn and doppler frequency shift correction corresponding to maximum peak
     prn_idx, fdoppler_correction_idx = np.where(corr_max == np.amax(np.amax(corr_max)))
@@ -198,16 +199,17 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
 
     if plot_CAF:
         # Finish up plotting
-        fig1, ax1 = plt.subplots()
+        fig1, ax1 = plt.subplots(figsize=(8, 5))
         for i in np.arange(corr_max.shape[0]):
             ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]))
         ax1.set_yscale('log')
         ax1.grid(True)
         ax1.legend()
-        ax1.set_xlabel('Doppler Frequency Shift')
-        ax1.set_ylabel('Max/Median Ratio')
-        fig1.suptitle('Max/Median Ratio  Versus Doppler Frequency Shift For Selected PRNs')
-        plt.show()
+        ax1.set_xlabel('Doppler Frequency Shift', fontsize=10)
+        ax1.set_ylabel('Max/Median Ratio', fontsize=10)
+        fig1.suptitle('Max/Median Ratio Versus Doppler Frequency Shift For Selected PRNs', fontsize=14)
+        fig1.savefig('fig1.png')
+        #plt.show()
 
     # Return results
     return prn, fdoppler_correction
@@ -305,4 +307,4 @@ def visualizeSignal(signal, fcenter, fsample, signal_name):
     fig3.suptitle('Time Behavior of ' + signal_name)
 
     # Display plots
-    plt.show()
+    #plt.show()
