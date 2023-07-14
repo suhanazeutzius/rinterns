@@ -164,11 +164,22 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr = False):
     c1 = corr1_abs / np.median(corr1_abs)
     c2 = corr2_abs / np.median(corr2_abs)
 
-    c1_indices, _ = signal.find_peaks(c1, height=7.5)
+    c1_ratio = 0.8 * (np.max(corr1_abs) / np.median(corr1_abs))
+    c2_ratio = 0.8 * (np.max(corr2_abs) / np.median(corr2_abs))
+
+    c1_indices, _ = signal.find_peaks(c1, height=c1_ratio)
     c2_indices = []
-    for index in c1_indices:
-        c2_index = np.array(corr2_abs[index-5:index+6]).argmax() + (index - 5)
-        c2_indices.append(c2_index)
+    to_delete = []
+    for i in range(len(c1_indices)):
+        c2_index = np.array(corr2_abs[c1_indices[i]-5:c1_indices[i]+6]).argmax() + (c1_indices[i] - 5)
+        if c2[c2_index] > c2_ratio:
+            c2_indices.append(c2_index)
+        else:
+            to_delete.append(i)
+    c1_indices = np.delete(c1_indices, to_delete)
+
+    # for i in range(len(c2_indices)):
+    #     print("c1: " + str(c1[c1_indices[i]]) + ", c2: " + str(c2[c2_indices[i]]))
 
     phase_corr1 = []
     phase_corr2 = []
@@ -176,38 +187,49 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr = False):
         phase_corr1.append(np.angle(corr1[c1_indices[i]]))
         phase_corr2.append(np.angle(corr2[c2_indices[i]]))
 
-    for i in range(len(phase_corr1)):
-        print("c1: " + str(np.rad2deg(phase_corr1[i])) + ", corr2: " + str(np.rad2deg(phase_corr2[i])))
+    # for i in range(len(phase_corr1)):
+    #     print("c1: " + str(np.rad2deg(phase_corr1[i])) + ", c2: " + str(np.rad2deg(phase_corr2[i])))
 
-    # c1_index = np.array(corr1_abs).argmax()
-    # # make sure comparing the same peaks
-    # c2_index = np.array(corr2_abs[c1_index-5:c1_index+6]).argmax() + (c1_index - 5)
     phase_diff = [phase_corr1[i] - phase_corr2[i] for i in range(len(phase_corr1))]
-    for i in range(len(phase_diff)):
-        if (phase_diff[i] < -np.pi and phase_diff[i] > (-2 * np.pi)):
-            phase_diff[i] += (2 * np.pi)
-        elif (phase_diff[i] > np.pi and phase_diff[i] < (2 * np.pi)):
-            phase_diff[i] -= (2 * np.pi)
+    # for i in range(len(phase_diff)):
+    #     if (phase_diff[i] < -np.pi and phase_diff[i] > (-2 * np.pi)):
+    #         phase_diff[i] += (2 * np.pi)
+    #     elif (phase_diff[i] > np.pi and phase_diff[i] < (2 * np.pi)):
+    #         phase_diff[i] -= (2 * np.pi)
 
+    print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    print("----------------------")
+    for i in range(len(phase_diff)):
+        if phase_diff[i] < 0:
+            phase_diff[i] += (2 * np.pi)
+
+    print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
     phase_diff_avg = np.average(phase_diff)
     phase_diff_med = np.median(phase_diff)
 
     print("Average phase: " + str(np.rad2deg(phase_diff_avg)))
     print("Median phase: " + str(np.rad2deg(phase_diff_med)))
 
+    # get phase diff median between -pi and pi
+    if (phase_diff_med < -np.pi and phase_diff_med > (-2 * np.pi)):
+        phase_diff_med += (2 * np.pi)
+    elif (phase_diff_med > np.pi and phase_diff_med < (2 * np.pi)):
+        phase_diff_med -= (2 * np.pi)
+
+    # get phase diff average between -pi and pi
+    if (phase_diff_avg < -np.pi and phase_diff_avg > (-2 * np.pi)):
+        phase_diff_avg += (2 * np.pi)
+    elif (phase_diff_avg > np.pi and phase_diff_avg < (2 * np.pi)):
+        phase_diff_avg -= (2 * np.pi)
+
     if plot_corr:
         fig2, ax2 = plt.subplots()
         ax2.plot(range(len(c2)), c2, '--')
         ax2.plot(range(len(c1)), c1)
-        plt.title("correlate 23 on 23 data")
+        plt.title("absolute value of correlations")
         plt.show()
 
-    # phase_corr1 = np.angle(corr1[c1_index])
-    # phase_corr2 = np.angle(corr2[c2_index])
-    # print("Phase channel 1: " + str(np.rad2deg(phase_corr1)))
-    # print("Phase channel 2: " + str(np.rad2deg(phase_corr2)))
-
-    return phase_diff_avg
+    return phase_diff_med
 
 
 def calc_AoA_corr(corrs, lookup_table):
@@ -252,8 +274,8 @@ if __name__ == "__main__":
 
     # testing on real data
     phase_ch_2 = np.deg2rad(25)
-    wire_delay = np.deg2rad(-165)
-    corr1, corr2 = prepareDataForMonopulse('data/Samples_Jul_13/short_long_inline.csv', 12, wire_delay, False, phase_ch_2)
+    wire_delay = np.deg2rad(0)
+    corr1, corr2 = prepareDataForMonopulse('data/Samples_Jul_13/PRN23_monopulse_outofline(2).csv', 23, wire_delay, False, phase_ch_2)
     phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=False)
     print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
     # phase_diff = np.deg2rad(43)

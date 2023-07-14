@@ -27,7 +27,7 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
     ca = makeGPSClean(prn, num_periods=2, sample_rate=sample_rate)
 
     # Perform correlation
-    corr = scipy.signal.correlate(ca, signal, method='fft')
+    corr = scipy.signal.correlate(ca, signal)
 
     # Create shift vector
     max_shift = int((len(ca)+len(signal)-2)/2)

@@ -37,4 +37,3 @@ plt.plot(t, wave)
 plt.plot(t, wave2)
 plt.plot(t, wave3)
 plt.show()
-

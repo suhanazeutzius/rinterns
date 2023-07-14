@@ -92,12 +92,12 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, rx2_of
     sig2 = trimSignal(sig2, fsample, trim_length=0.002)
 
     # Remove wire delay from faster channel
-    sig2_corrected = [sig2[i] * np.exp(-wire_delay * 1j) for i in range(len(sig2))]
+    sig2_corrected = [sig2[i] * np.exp(wire_delay * 1j) for i in range(len(sig2))]
     sig2 = np.array(sig2_corrected)
     del sig2_corrected
 
     # Remove phase offset between channels
-    sig2_corrected = [sig2[i] * np.exp(-rx2_offset * 1j) for i in range(len(sig2))]
+    sig2_corrected = [sig2[i] * np.exp(rx2_offset * 1j) for i in range(len(sig2))]
     sig2 = np.array(sig2_corrected)
     del sig2_corrected
     # sig3_corrected = [sig3[i] * np.exp(rx3_offset * 1j) for i in range(len(sig3))]
@@ -130,7 +130,6 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, rx2_of
     # _, fdoppler4 = correlateSignal(sig4, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
     # print("The doppler frequency shift for Rx 1 is: " + str(fdoppler4) + " Hz")
     # fdoppler = np.mean([fdoppler1, fdoppler2, fdoppler3, fdoppler4])
-
 
     # Extract correlation data for monopulse algorithm
     corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
