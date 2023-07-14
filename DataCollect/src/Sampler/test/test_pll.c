@@ -28,6 +28,14 @@ int main(){
     }
 
     /* DO STUFF */
+    printf("Master Device PLL State:\n");
+    pll_state(master_dev);
+
+    printf("\nSlave Device PLL State:\n");
+    pll_state(slave_dev); 
+
+    bladerf_close(master_dev);
+    bladerf_close(slave_dev);
 
     return 0;
 }
