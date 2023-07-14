@@ -32,7 +32,7 @@ int pll_state(struct bladerf *dev){
         fprintf(stderr, "Failed to get pll lock state: %s\n", bladerf_strerror(status));
     }
     else{
-        printf("Locked:\t%s\n", locked ? "True" : "False");
+        printf("Locked:\t\t%s\n", locked ? "True" : "False");
     }
 
     /* get ref clock frequency */

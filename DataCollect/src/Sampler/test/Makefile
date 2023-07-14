@@ -77,8 +77,8 @@ sampler: $(SOURCES) Makefile test_sampler.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_sampler.c -o ./test
 
 ## test pll
-pll: $(SOURCES) Makefile test_pll.c
-	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_pll.c -o ./test
+lowlevel: $(SOURCES) Makefile test_lowlevel.c
+	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_lowlevel.c -o ./test
 
 ## test all
 all: $(SOURCES) Makefile test_all.c

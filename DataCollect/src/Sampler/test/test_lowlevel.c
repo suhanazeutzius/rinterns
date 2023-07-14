@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "common/bladedevice.h"
 #include "pll.h"
-
+#include "clock.h"
 
 int main(){
 
@@ -27,12 +27,23 @@ int main(){
         return -1;
     }
 
-    /* DO STUFF */
+    /* get pll state */
+    
     printf("Master Device PLL State:\n");
     pll_state(master_dev);
-
+    
     printf("\nSlave Device PLL State:\n");
     pll_state(slave_dev); 
+
+    /* get DAC trim */
+   
+    printf("\nMaster DAC Trim\n");
+    status = clock_vctcxo_state(master_dev);  
+
+    printf("\nSlave DAC Trim\n");
+    status = clock_vctcxo_state(slave_dev);  
+
+    /* close devices */
 
     bladerf_close(master_dev);
     bladerf_close(slave_dev);
