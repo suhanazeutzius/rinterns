@@ -14,7 +14,7 @@ from lookup_table import gen_shifted_signals
 plt.style.use('flatirons/flatirons.mplstyle')
 
 
-def gen_sim_signals():
+def gen_sim_signals(fsample):
     """
     ! Simulates what 4 antennas in a square array would receive if there were 5 satellites in range.
     @note no noise added to signals
@@ -24,14 +24,13 @@ def gen_sim_signals():
     doppler_shifts = [-500, 1000, 1350, -1830, 400]
     elevation_angles = [0, 5, 10, 15, 20]
     azimuth_angles = [0, 45, 60, 135, 180]
-    fsample = 2 * 1.023e6  # [Hz]
     a1_signals = []
     a2_signals = []
     a3_signals = []
     a4_signals = []
     for i in range(0, len(prns)):
         # make clean gps signal
-        sig = makeGPSClean(prns[i], num_periods=3, sample_rate=fsample)
+        sig = makeGPSClean(prns[i], num_periods=48, sample_rate=fsample)
         all_sigs = gen_shifted_signals(sig, elevation_angles[i], azimuth_angles[i])
         for j in range(len(all_sigs)):
             # Shift signal by doppler shift frequency
@@ -151,7 +150,7 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, rx2_of
 def prepareDataForMonopulse_sim(prn, plot_correlation=False):
     # Define frequencies
     fcenter_SDR = 1575.42e6  # [Hz]
-    fsample = 2.048e6  # [Hz]
+    fsample = 10 * 1.023e6  # [Hz]
     fGPS = 1575.42e6  # [Hz]
 
     # Define physical properties of system
@@ -163,7 +162,7 @@ def prepareDataForMonopulse_sim(prn, plot_correlation=False):
     # Define constants
     c = 299792458  # [m/s]
 
-    sig1, sig2, sig3, sig4 = gen_sim_signals()
+    sig1, sig2, sig3, sig4 = gen_sim_signals(fsample)
 
     # Calculate maximum doppler shift
     Rgps = Rearth + hGPS  # [m]

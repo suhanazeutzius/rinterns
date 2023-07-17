@@ -164,22 +164,25 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr = False):
     c1 = corr1_abs / np.median(corr1_abs)
     c2 = corr2_abs / np.median(corr2_abs)
 
-    c1_ratio = 0.8 * (np.max(corr1_abs) / np.median(corr1_abs))
-    c2_ratio = 0.8 * (np.max(corr2_abs) / np.median(corr2_abs))
+    # c1_indices = []
+    # c2_indices = []
+    # c1_indices.append(np.array(corr1_abs).argmax())
+    # c2_indices.append(np.array(corr2_abs[c1_indices[0]-5:c1_indices[0]+5]).argmax() + (c1_indices[0] - 5))
 
-    c1_indices, _ = signal.find_peaks(c1, height=c1_ratio)
+    peak_height = 7.5
+    c1_indices, _ = signal.find_peaks(c1, height=peak_height)
     c2_indices = []
     to_delete = []
     for i in range(len(c1_indices)):
         c2_index = np.array(corr2_abs[c1_indices[i]-5:c1_indices[i]+6]).argmax() + (c1_indices[i] - 5)
-        if c2[c2_index] > c2_ratio:
+        if c2[c2_index] > peak_height:
             c2_indices.append(c2_index)
         else:
             to_delete.append(i)
     c1_indices = np.delete(c1_indices, to_delete)
 
-    # for i in range(len(c2_indices)):
-    #     print("c1: " + str(c1[c1_indices[i]]) + ", c2: " + str(c2[c2_indices[i]]))
+    for i in range(len(c2_indices)):
+        print("c1: " + str(c1[c1_indices[i]]) + ", c2: " + str(c2[c2_indices[i]]))
 
     phase_corr1 = []
     phase_corr2 = []
@@ -197,13 +200,13 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr = False):
     #     elif (phase_diff[i] > np.pi and phase_diff[i] < (2 * np.pi)):
     #         phase_diff[i] -= (2 * np.pi)
 
-    print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
-    print("----------------------")
+    # print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    # print("----------------------")
     for i in range(len(phase_diff)):
         if phase_diff[i] < 0:
             phase_diff[i] += (2 * np.pi)
 
-    print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    # print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
     phase_diff_avg = np.average(phase_diff)
     phase_diff_med = np.median(phase_diff)
 
@@ -268,15 +271,15 @@ if __name__ == "__main__":
     # print("Lookup table: " + str(aoa))
 
     # # testing DF algorithm on simulated correlation algorithm output
-    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(27)
+    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(7)
     # correlations = [corr1, corr2, corr3, corr4]
     # print(calc_AoA_corr(correlations, lookup_table))
 
     # testing on real data
     phase_ch_2 = np.deg2rad(25)
     wire_delay = np.deg2rad(0)
-    corr1, corr2 = prepareDataForMonopulse('data/Samples_Jul_13/PRN23_monopulse_outofline(2).csv', 23, wire_delay, False, phase_ch_2)
-    phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=False)
+    corr1, corr2 = prepareDataForMonopulse('data/Samples_Jul_17/PRN_12_Rx1_Rx2(2).csv', 12, wire_delay, True, phase_ch_2)
+    phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=True)
     print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
     # phase_diff = np.deg2rad(43)
     theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
