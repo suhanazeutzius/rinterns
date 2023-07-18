@@ -22,7 +22,7 @@ plt.style.use('flatirons/flatirons.mplstyle')
 def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
-    fsample = 2.048e6 # [Hz]
+    fsample = 2.046e6 # [Hz]
     fGPS = 1575.42e6 # [Hz]
     
     # Define physical properties of system
@@ -74,24 +74,57 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
 
 
 
-def getPhaseOffset(ch1, ch2):
+def getPhaseOffset(ch1, ch2, angle=True):
     """Get phase offset between two channels
 
     @param ch1, ch2 -- complex correlation time output for ch1 and ch2
     @return list of phase offsets calculated from peaks above threshold
     """
     phaseOffsets = []
-    threshold = 38000
+
+    median = abs(np.median(ch1))
+    max = abs(np.max(ch1))
+    max_median = max / median
+
+    threshold = 0.90 * max_median
 
     for i in range(len(ch1)):
-        if(ch1[i] > threshold):
-            p1 = np.arctan(np.imag(ch1[i]) / np.real(ch1[i]))
-            p2 = np.arctan(np.imag(ch2[i]) / np.real(ch2[i]))
-#            p1 = np.angle(ch1[i])
-#            p2 = np.angle(ch2[i])
+        if(abs(ch1[i]/median) > threshold and abs(ch2[i]/median) > threshold):
+            if(not(angle)):
+                p1 = np.arctan(np.imag(ch1[i]) / np.real(ch1[i]))
+                p2 = np.arctan(np.imag(ch2[i]) / np.real(ch2[i]))
+            else:
+                p1 = np.angle(ch1[i])
+                p2 = np.angle(ch2[i])
             phaseOffsets.append(p2 - p1)
 
     return phaseOffsets
+
+
+
+
+def plotPhases(ch1, ch2):
+    figure, ax = plt.subplots(2, 1, sharex=True)
+
+    phase1 = [np.arctan(np.imag(ch1[i])/np.real(ch1[i])) for i in range(len(ch1))]
+    phase2 = [np.arctan(np.imag(ch2[i])/np.real(ch2[i])) for i in range(len(ch2))]
+
+    phase1 = [np.rad2deg(phase) for phase in phase1]
+    phase2 = [np.rad2deg(phase) for phase in phase2]
+
+    t1 = np.linspace(1-len(ch1), len(ch1), len(ch1))
+    t2 = np.linspace(1-len(ch2), len(ch2), len(ch2))
+
+    ax[0].plot(t1, phase1)
+    ax[0].set_title("Phases of Two Channel PRN Correlation")
+    ax[0].set_ylabel("Phase of Rx1 Correlation")
+    ax[1].plot(t2, phase2)
+    ax[1].set_ylabel("Phase of Rx2 Correlation")
+    ax[1].set_xlabel("Index")
+
+    plt.show()
+    
+
 
 
 def combineDevices(filename1, filename2, fileout):
@@ -136,17 +169,26 @@ def combineDevices(filename1, filename2, fileout):
 
 if __name__ == "__main__":
     # Define data properties
-    combineDevices("/mnt/c/users/ninja/desktop/samples/PRN_5_copper_slave.csv", "/mnt/c/users/ninja/desktop/samples/PRN_5_gray_master.csv", "/mnt/c/users/ninja/desktop/combo.csv")
+    #combineDevices("/mnt/c/users/ninja/desktop/samples/PRN_5_copper_slave.csv", "/mnt/c/users/ninja/desktop/samples/PRN_5_gray_master.csv", "/mnt/c/users/ninja/desktop/combo.csv")
 
-    file_name = '/mnt/c/users/ninja/desktop/combo.csv'
-    prn = 13
-    plot_correlation = False 
+    file_name = '/home/empire/Desktop/sample_46.csv'
+    prn = 3
+    plot_correlation = True
     wire_delay = 0
     
     Rx1, Rx2 = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
-    pOffsets = getPhaseOffset(Rx1, Rx2)
+
+    print("Using Angle()...")
+    pOffsets = getPhaseOffset(Rx1, Rx2, angle=True)
     pOffsets = [np.rad2deg(p) for p in pOffsets]
-    print(pOffsets)
+    print("NUM: " + str(len(pOffsets)))
+    print("MEAN: " + str(np.mean(pOffsets)))
+    print("MEDIAN: " + str(np.median(pOffsets)))
+    print("STD_DEV: " + str(np.std(pOffsets)))
+
+    print("Using arctan()...")
+    pOffsets = getPhaseOffset(Rx1, Rx2, angle=False)
+    pOffsets = [np.rad2deg(p) for p in pOffsets]
     print("NUM: " + str(len(pOffsets)))
     print("MEAN: " + str(np.mean(pOffsets)))
     print("MEDIAN: " + str(np.median(pOffsets)))
