@@ -21,7 +21,7 @@ plt.style.use('flatirons/flatirons.mplstyle')
 # Outputs:
 #   prn_dict        : dictionary of GPS satellites               [dictionary of type EarthSatellite]
 #   [fig, ax]       : figure and axes objects for plot
-def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug=False, show_plot=True):
+def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug, show_plot):
     # Load satellite ephemeris data from TLE file
     satellites = load.tle_file(tle_file)
 
@@ -71,8 +71,8 @@ def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug=Fal
     ax.set_rmax(90)
     ax.set_title('Overhead Satellites')
     fig.savefig('overhead_satellites.png')
-    if show_plot:
-        plt.show()
+    #if show_plot:
+    #plt.show()
 
     # Return dictionary of satellite objects
     return prn_dict, [fig, ax]
@@ -149,8 +149,8 @@ def calcError(t, tle_file, field_of_view, receiver_latlon, direction_estimates, 
     ax.legend(['True Position', 'Estimated Position'])
     ax.set_title('Comparison of Estimated and True Satellite Positions')
     fig.savefig('satellite_estimates.png')
-    if show_plot:
-        plt.show()
+    #if show_plot:
+    plt.show()
         
     # Return results
     results = {int(errors[i,0]): errors[i,1:] for i in np.arange(errors.shape[0])}

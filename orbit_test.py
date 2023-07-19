@@ -14,8 +14,8 @@ gps_file = 'tle-gps.txt'
 
 # Define time
 ts = load.timescale()
-t = ts.utc(2023, 7, 12, 21, 20, 0) # Set a specific time
-#t = ts.now()                       # Grab current time
+#t = ts.utc(2023, 7, 18, 11, 40, 0) # Set a specific time
+t = ts.now()                       # Grab current time
 
 # Display satellites that are currently overhead receiver
 _ = getOverheadSatellites(t, gps_file, 26.2, [+39.58709, -104.82873])

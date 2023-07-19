@@ -1,26 +1,52 @@
-# import important python things
 from tkinter import *
 from tkinter import filedialog as fd
 from PIL import ImageTk, Image
 from monopulse_data_prep import *
 import os
+from skyfield.api import load, wgs84, EarthSatellite
+import numpy as np
+import matplotlib.pyplot as plt
+import re
+from flatirons.orbits_error import getOverheadSatellites
+import time
+
 
 # create the window
 root = Tk()
 root.title("Satellite Tracker")
 #root.configure(bg='#E4D4AD')
 screen_width = root.winfo_screenwidth() - int(0.6 * root.winfo_screenwidth())
-print(screen_width)
+#print(screen_width)
 screen_height = root.winfo_screenheight() - int(0.2 * root.winfo_screenheight())
-print(screen_height)
+#print(screen_height)
 str_window = str(screen_width) + 'x' + str(screen_height)
 root.geometry(str_window)
 
+# place a frame and canvas into the gui on startup
+#starting_frame = Frame(root, width=400, height=300, bg='#0F0F0F')
+#starting_frame.place(x=400, y=130)
+#starting_canvas = Canvas(root, width=388, height=288, bg="#FFFFFF")
+#starting_canvas.place(x=405, y=135)
+#
 
-starting_frame = Frame(root, width=400, height=300, bg='#0F0F0F')
-starting_frame.place(x=400, y=130)
-starting_canvas = Canvas(root, width=388, height=288, bg="#FFFFFF")
-starting_canvas.place(x=405, y=135)
+# get current time
+ts = load.timescale()
+#t = ts.utc(2023, 7, 18, 11, 40, 0)
+t = ts.now()
+gps_file = 'tle-gps.txt'
+debug = False
+show_plot = False
+_ = getOverheadSatellites(t, gps_file, 26.2, [+39.58709, -104.82873], debug, show_plot)
+# making the frame for the canvas to sit in
+fig2 = ImageTk.PhotoImage(Image.open('overhead_satellites.png'))
+fig2.img = fig2
+frame2 = Frame(root, width=fig2.width() + 12, height=fig2.height() + 12, bg="#3C3B36")
+frame2.place(x=400, y=130)
+
+# placing a canvas that the image will sit in 
+canvas2 = Canvas(root, width=fig2.width(), height=fig2.height())
+canvas2.place(x=405, y=135)
+my_img2 = canvas2.create_image(fig2.width()/2, fig2.height()/2, image=fig2)
 
 
 # this will open up the files and browse for the specified data set
@@ -60,6 +86,9 @@ def browseFiles():
 
 # this changes the prn based on user input from dropdown and plots it
 def whichPRN():    
+    # get rid of other canvases
+    canvas2.delete('all')
+
     # low is for correlating
     if len(selected_file_name) == 0:
         print("No file selected. Please select a file.")
@@ -91,40 +120,37 @@ def whichPRN():
         canvas.place(x=405, y=135)
         my_img = canvas.create_image(img.width()/2, img.height()/2, image=img)     
 
-prns = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '10',
-    '11',
-    '12',
-    '13',
-    '14',
-    '15',
-    '16',
-    '17',
-    '18',
-    '19',
-    '20',
-    '21',
-    '22',
-    '23',
-    '24',
-    '25',
-    '26',
-    '27',
-    '28',
-    '29',
-    '30',
-    '31',
-    '32'
-]
+
+# this takes the user input and does things with it
+def seekSatellites():
+    # get rid of other canvases
+    #canvas.delete('all')
+
+    # get current time
+    ts = load.timescale()
+    #t = ts.utc(2023, 7, 18, 11, 40, 0)
+    t = ts.now()
+    gps_file = 'tle-gps.txt'
+    debug = False
+    show_plot = False
+    _ = getOverheadSatellites(t, gps_file, 26.2, [+39.58709, -104.82873], debug, show_plot)
+    #plt.show()
+    
+    #time.sleep(1)
+
+    # making the frame for the canvas to sit in
+    fig2 = ImageTk.PhotoImage(Image.open('overhead_satellites.png'))
+    fig2.img = fig2
+    frame2 = Frame(root, width=fig2.width() + 12, height=fig2.height() + 12, bg="#3C3B36")
+    frame2.place(x=400, y=130)
+ 
+    # placing a canvas that the image will sit in 
+    canvas2 = Canvas(root, width=fig2.width(), height=fig2.height())
+    canvas2.place(x=405, y=135)
+    my_img2 = canvas2.create_image(fig2.width()/2, fig2.height()/2, image=fig2) 
+
+
+prns = list(range(1,33))
 
 # converting the data from the dropdown menu
 clicked = StringVar()
@@ -138,6 +164,11 @@ drop.config(fg='#EAE0D5', activeforeground='#EAE0D5', bg='#4D4D77', activebackgr
 drop["menu"].config(fg='#EAE0D5', bg='#4D4D77')
 drop.place(x=150, y=109)
 
+# get current satellite sky plot
+time_butt = Button(root, text="Show Current Sky Map:", command=seekSatellites)
+time_butt.config(fg='#EAE0D5', activeforeground='#EAE0D5', bg='#4D4D77', activebackground='#81829C')
+time_butt.place(x=50, y=155)
+
 # correlate button
 corr_butt = Button(root, text="Select PRN:", command=whichPRN)
 corr_butt.config(fg='#EAE0D5', activeforeground='#EAE0D5', bg='#4D4D77', activebackground='#81829C')
@@ -148,18 +179,10 @@ data_butt = Button(root, text="Choose File", command=browseFiles)
 data_butt.config(fg='#EAE0D5', activeforeground='#EAE0D5', bg='#4D4D77', activebackground='#81829C')
 data_butt.place(x=50, y=80)
 
-# this will  to display the plot that Tycho made
-#compass_butt = Button(root, text="Compass")
-#compass_butt.place(x=25, y=100)
-
 # this button exits the GUI
 exit_butt = Button(root, text="Exit", command=root.quit)
 exit_butt.config(fg='#EAE0D5', activeforeground='#EAE0D5', bg='#4D4D77', activebackground='#81829C')
-exit_butt.place(x=130, y=250)
-
-# define the image that will go in the GUI
-#img = ImageTk.PhotoImage(Image.open('bee.png'))
-#rz_img = img.resize((100, 100))
+exit_butt.place(x=230, y=450)
 
 
 # run the window
