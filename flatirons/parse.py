@@ -17,26 +17,44 @@ def csv_parse(csv_file):
 
         I1 = []
         I2 = []
+        I3 = []
+        I4 = []
         Q1 = []
         Q2 = []
+        Q3 = []
+        Q4 = []
+        num_channels = None
 
         for line in lines: 
             chunks = line.split(", ")
             chunks[-1] = chunks[-1].replace("\n", "")
-
-            if(len(chunks) == 2):
-               I1.append(int(chunks[0]))
-               Q1.append(int(chunks[1]))
-            elif(len(chunks) == 4):
+            if len(chunks) == 2:
+                num_channels = 1
+                I1.append(int(chunks[0]))
+                Q1.append(int(chunks[1]))
+            elif len(chunks) == 4:
+                num_channels = 2
                 I1.append(int(chunks[0]))
                 Q1.append(int(chunks[1]))
                 I2.append(int(chunks[2]))
                 Q2.append(int(chunks[3]))
+            elif len(chunks) == 8:
+                num_channels = 4
+                I1.append(int(chunks[0]))
+                Q1.append(int(chunks[1]))
+                I2.append(int(chunks[2]))
+                Q2.append(int(chunks[3]))
+                I3.append(int(chunks[4]))
+                Q3.append(int(chunks[5]))
+                I4.append(int(chunks[6]))
+                Q4.append(int(chunks[7]))
 
-        if(len(I2) < len(lines)/3):
+        if num_channels == 1:
             return np.array(I1), np.array(Q1)
+        elif num_channels == 2:
+            return np.array(I1), np.array(Q1), np.array(I2), np.array(Q2)
         else:
-            return np.array(I1),np.array(Q1),np.array(I2),np.array(Q2)
+            return np.array(I1), np.array(Q1), np.array(I2), np.array(Q2), np.array(I3), np.array(Q3), np.array(I4), np.array(Q4)
 
 # dat_parse() extracts the IQ data from a .dat file
 #

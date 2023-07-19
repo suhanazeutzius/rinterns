@@ -24,7 +24,7 @@ def calc_phase_shift(sig1, sig2):
 t = np.arange(0,np.pi, 1/30000)
 
 freq = 2 # in Hz
-phi = np.pi / 8
+phi = -np.pi / 2
 amp = 1
 k = 2*np.pi*freq*t + phi
 

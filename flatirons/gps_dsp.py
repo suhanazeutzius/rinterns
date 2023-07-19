@@ -7,6 +7,7 @@ import math
 # Import custom packages
 from flatirons.gps_gen import *
 
+
 # correlateWithGPS() correlates an input signal with a GPS C/A code determined by 
 # the provided prn number
 #
@@ -24,7 +25,7 @@ from flatirons.gps_gen import *
 #   corr         : correlation coefficient vector     [numpy array of type complex_]
 def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
-    ca = makeGPSClean(prn, num_periods=2, sample_rate=sample_rate)
+    ca = makeGPSClean(prn, num_periods=10, sample_rate=sample_rate)
 
     # Perform correlation
     corr = scipy.signal.correlate(ca, signal)
@@ -48,6 +49,7 @@ def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot
 
     # Return correlation results
     return corr
+
 
 # filterSignal() applies a filter to an input signal
 #
@@ -95,6 +97,7 @@ def filterSignal(fcenter, fsample, signal, filter_type, bandwidth=2e6, order=4):
     # Return filtered signal
     return signal
 
+
 # tuneSignal() tunes a signal so the GPS signal band is centered at 0 Hz
 #
 # Inputs:
@@ -115,6 +118,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 
     # Return signal
     return signal
+
 
 # correlateSignal() performs correlation analysis on a GPS signal
 #
@@ -197,9 +201,10 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
         prn_idx, fdoppler_correction_idx = np.where(corr_max == np.amax(np.amax(corr_max)))
         prn = prns[prn_idx[0]]
         fdoppler_correction = freq_range[fdoppler_correction_idx[0]]
-    else: # Peak is not above threshold
+    else: # Peak is not above threshold12
         print("!! ERROR: No correlation peak above threshold !!")
-        return None, None # Return None
+        # exit()
+        # return None, None # Return None
 
     if plot_CAF:
         # Finish up plotting
@@ -216,6 +221,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
 
     # Return results
     return prn, fdoppler_correction
+
 
 # correlateForMonopulse() returns the correlation results required by the monopulse algorithm
 #
@@ -266,6 +272,7 @@ def trimSignal(sig, fsample, trim_length=2e-3):
 
     # Return trimmed signal
     return sig
+
 
 # visualizeGPS() visualizes an input GPS signal
 #
