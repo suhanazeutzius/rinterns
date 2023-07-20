@@ -173,6 +173,8 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
         ax2.set_xlabel('Correlation Index')
         ax2.set_ylabel('Correlation Peak Strength')
         ax2.set_title('Absolute Value of Correlations')
+        # ax2.plot(range(len(corr1)), corr1)
+        # ax2.plot(range(len(corr2)), corr2, '--')
         ax2.plot(range(len(c1)), c1)
         ax2.plot(range(len(c2)), c2, '--')
         plt.axhline(y=7.5, color='k', linestyle=':')
@@ -204,6 +206,9 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
             phase_diff[i] += (2 * np.pi)
 
     # print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    print("standard deviation of phase difference: " + str(np.rad2deg(np.std(phase_diff))))
+    # plt.hist(np.rad2deg(phase_diff))
+    # plt.show()
     phase_diff_avg = np.average(phase_diff)
     phase_diff_med = np.median(phase_diff)
 
@@ -225,7 +230,7 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
     return -phase_diff_med  # return the opposite of the calculated phase shift
 
 
-def calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table):
+def calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table, plot_corr=False):
     """ ! Calculates the angle of arrival from the lookup table.
 
     @param corr1            Correlation vector for signal 1
@@ -271,38 +276,53 @@ if __name__ == "__main__":
     # aoa = calc_AoA(signals, lookup_table)  # find angle of arrival of simulated signal in lookup table
     # print("Lookup table: " + str(aoa))
 
-    # testing DF algorithm on simulated correlation algorithm output
-    corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(22)
-    elev, azim = calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table)
-    print("Elevation angle: " + str(elev))
-    print("Azimuth angle: " + str(azim))
+    # # testing DF algorithm on simulated correlation algorithm output
+    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(1)
+    # elev, azim = calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table)
+    # print("Elevation angle: " + str(elev))
+    # print("Azimuth angle: " + str(azim))
 
-    # # testing on real data (2 channel)
-    # phase_ch_2 = np.deg2rad(25)
-    # filename = 'data/Samples_Jul_17/PRN_12_Rx1_Rx2.csv'
-    # prn = 12
-    # corr1, corr2 = prepareDataForMonopulse_2(filename, prn, False, phase_ch_2)
-    # phase_diff, theta = calc_Aoa_corr_2d(corr1, corr2, plot_corr=True)
-    # print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
-    # print("Calculated elevation angle: " + str(np.rad2deg(theta)))
+    # testing on real data (2 channel)
+    phase_ch_2 = np.deg2rad(25)
+    filename = 'data/Samples_Jul_18/PRN_11_Rx2_Rx1.csv'
+    prn = 5
+    corr1, corr2 = prepareDataForMonopulse_2(filename, prn, False, phase_ch_2)
+    phase_diff, theta = calc_Aoa_corr_2d(corr1, corr2, plot=False)
+    print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
+    print("Calculated elevation angle: " + str(np.rad2deg(theta)))
 
     # # testing on real data (4 channel)
-    # phase_ch_2 = np.deg2rad(25)
-    # phase_ch_3 = np.deg2rad(-50)
-    # phase_ch_4 = np.deg2rad(-31)
-    # filename = 'data/Samples_Jul_18/4Channel.csv'
-    # prn = 5
-    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse(filename, prn, True, phase_ch_2, phase_ch_3, phase_ch_4)
-    # elev, azim = calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table)
-    # print("Elevation angle: " + str(np.rad2deg(elev)))
-    # print("Azimuth angle: " + str(np.rad2deg(azim)))
-    # # # checking phase shifts between individual elements
-    # # phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=False)
-    # # print("Calculated phase difference copper: " + str(np.rad2deg(phase_diff)))
-    # # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
-    # # print("Calculated elevation angle copper: " + str(np.rad2deg(theta)))
-    # # phase_diff = calc_corr_phase_shift(corr3, corr4, plot_corr=False)
-    # # print("Calculated phase difference gray: " + str(np.rad2deg(phase_diff)))
-    # # # phase_diff = np.deg2rad(43)
-    # # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
-    # # print("Calculated elevation angle gray: " + str(np.rad2deg(theta)))
+    # phase_copper = 25
+    # phase_grey = 19
+    # phase_copper_minus_grey = 40
+    # phase_ch_2 = np.deg2rad(phase_grey)
+    # phase_ch_3 = np.deg2rad(phase_copper_minus_grey)
+    # phase_ch_4 = np.deg2rad(phase_copper_minus_grey + phase_copper)
+    # filename = 'data/Samples_Jul_19/sample3.csv'
+    # prn = 23
+    # corr1, corr2, corr3, corr4 = prepareDataForMonopulse(filename, prn, False, phase_ch_2, phase_ch_3, phase_ch_4)
+    # elev, azim = calc_AoA_corr(corr3, corr4, corr1, corr2, lookup_table)
+    # print("Elevation angle: " + str(elev))
+    # print("Azimuth angle: " + str(azim))
+    # # checking phase shifts between individual elements
+    # print("should be correct")
+    # phase_diff = calc_corr_phase_shift(corr1, corr3, plot_corr=False)
+    # print("Calculated phase difference 1 to 3: " + str(np.rad2deg(phase_diff)))
+    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    # print("Calculated elevation angle 1 to 3: " + str(np.rad2deg(theta)))
+    #
+    # phase_diff = calc_corr_phase_shift(corr2, corr4, plot_corr=False)
+    # print("Calculated phase difference 2 to 4: " + str(np.rad2deg(phase_diff)))
+    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    # print("Calculated elevation angle 2 to 4: " + str(np.rad2deg(theta)))
+    #
+    # print("should be 0")
+    # phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=False)
+    # print("Calculated phase difference 1 to 2: " + str(np.rad2deg(phase_diff)))
+    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    # print("Calculated elevation angle 1 to 2: " + str(np.rad2deg(theta)))
+    #
+    # phase_diff = calc_corr_phase_shift(corr3, corr4, plot_corr=False)
+    # print("Calculated phase difference 3 to 4: " + str(np.rad2deg(phase_diff)))
+    # theta = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
+    # print("Calculated elevation angle 3 to 4: " + str(np.rad2deg(theta)))

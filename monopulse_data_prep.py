@@ -14,7 +14,7 @@ from lookup_table import gen_shifted_signals
 plt.style.use('flatirons/flatirons.mplstyle')
 
 
-def gen_sim_signals(fsample):
+def gen_sim_signals(e1, a1, fsample):
     """
     ! Simulates what 4 antennas in a square array would receive if there were 5 satellites in range.
 
@@ -25,9 +25,9 @@ def gen_sim_signals(fsample):
     prns = [1, 7, 13, 22, 27]
     # prns = [1, 7, 13]
     doppler_shifts = [-500, 1000, 1350, -1830, 400]
-    elevation_angles = [-20, 5, 10, 15, 20]
-    azimuth_angles = [0, 45, 60, 135, 180]
-    noise_power_AWGN_dB = 16
+    elevation_angles = [e1, 5, 10, 15, 20]
+    azimuth_angles = [a1, 45, 60, 135, 180]
+    noise_power_AWGN_dB = 20
     noise_power_AWGN = math.pow(10, (noise_power_AWGN_dB / 10))
     a1_signals = []
     a2_signals = []
@@ -227,7 +227,7 @@ def prepareDataForMonopulse_sim(prn, plot_correlation=False):
     # Define constants
     c = 299792458  # [m/s]
 
-    sig1, sig2, sig3, sig4 = gen_sim_signals(fsample)
+    sig1, sig2, sig3, sig4 = gen_sim_signals(5, 80, fsample)
 
     # sig1 = makeGPSClean(1, num_periods=5, sample_rate=fsample)
     # phase2 = ((2 * np.pi * 0.5) / 1) * np.sin(np.deg2rad(10))
