@@ -212,7 +212,7 @@ def prepareDataForMonopulse_2(file_name, prn, plot_correlation, rx2_offset=0, rx
     return corr1, corr2
 
 
-def prepareDataForMonopulse_sim(prn, plot_correlation=False):
+def prepareDataForMonopulse_sim(prn, elevation, azimuth, plot_correlation=False):
     # Define frequencies
     fcenter_SDR = 1575.42e6  # [Hz]
     fsample = 2 * 1.023e6  # [Hz]
@@ -227,7 +227,7 @@ def prepareDataForMonopulse_sim(prn, plot_correlation=False):
     # Define constants
     c = 299792458  # [m/s]
 
-    sig1, sig2, sig3, sig4 = gen_sim_signals(5, 80, fsample)
+    sig1, sig2, sig3, sig4 = gen_sim_signals(elevation, azimuth, fsample)
 
     # sig1 = makeGPSClean(1, num_periods=5, sample_rate=fsample)
     # phase2 = ((2 * np.pi * 0.5) / 1) * np.sin(np.deg2rad(10))

@@ -3,6 +3,10 @@ from skyfield.api import load, wgs84, EarthSatellite
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Import custom packages
+from monopulse_data_prep import *
+from lookup_table import *
+
 # Load mplstyle file
 plt.style.use('flatirons/flatirons.mplstyle')
 
@@ -155,3 +159,26 @@ def calcError(t, tle_file, field_of_view, receiver_latlon, direction_estimates, 
     # Return results
     results = {int(errors[i,0]): errors[i,1:] for i in np.arange(errors.shape[0])}
     return results
+
+def performSensitivityAnalysis():
+    wavelength = 0.1905
+    d = wavelength/2
+    lookup_table = makeLookupTable(d, wavelength, 27, 360, step=1)
+
+    elevations = [0,3,6,9,12,15,18,21]
+    azimuths = [0,45,90,135,180,225,270,315,360]
+    error_el = np.zeros((len(azimuths),len(elevations)))
+    error_az = np.zeros((len(azimuths), len(elevations)))
+    for j, el in enumerate(elevations):
+        for i, az in enumerate(azimuths):
+            corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim(1, el, az)
+            elev, azim = calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table)
+            error_el[i,j] = np.abs(elev-el)
+            error_az[i,j] = np.abs(azim-az)
+
+    fig, ax = plt.subplots(2,1)
+    for i in np.arange(len(azimuths)):
+        ax[0].plot(elevations, error_el[i,:], label=str(azimuths[i]))
+        ax[0].legend()
+        ax[1].plot(elevations, error_az[i,:])
+    plt.show()
