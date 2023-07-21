@@ -43,7 +43,8 @@ canvas2.place(x=405, y=135)
 my_img2 = canvas2.create_image(fig2.width()/2, fig2.height()/2, image=fig2)
 
 check = IntVar()
-
+check_mark = Checkbutton(root, text='Select All', variable=check, onvalue=1, offvalue=0)
+check_mark.place(x=50, y=210)
 
 # this will open up the files and browse for the specified data set
 def browseFiles():
@@ -92,8 +93,8 @@ def whichPRN():
     #canvas2.delete('all')
     
     print("got here 1")
-    print("Check value: " + str(check))
-    print("file: " + selected_file_name) 
+    print("Check value: " + str(check.get()))
+    print("file length: " + str(len(selected_file_name))) 
     
     # low is for correlating
     if len(selected_file_name) == 0:
@@ -115,40 +116,11 @@ def whichPRN():
         canvas2 = Canvas(root, width=fig2.width(), height=fig2.height())
         canvas2.place(x=405, y=135)
         my_img2 = canvas2.create_image(fig2.width()/2, fig2.height()/2, image=fig2)
-    else:
-        # path and filename    
-        file_name = working_path
-    
-        # sets the PRN numr as dropdown selection, sets parameters for prepareDataMonopulse 
-        prn = int(clicked.get())
-        plot_correlation = True
-        wire_delay = 7.13e-9 
-   
-        # calls prepareDataForMonopulse from tycho's code and plots the correlation
-        _, corr = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
-
-        # puts an image in the GUI showing whatever is saved as fig1
-        img = ImageTk.PhotoImage(Image.open('fig1.png'))
-    
-        # making the frame for the canvas to sit in
-        frame = Frame(root, width=img.width() + 12, height=img.height() + 12, bg="#3C3B36")
-        frame.place(x=400, y=130)    
-    
-        # placing a canvas that the image will sit in 
-        canvas = Canvas(root, width=img.width(), height=img.height())
-        canvas.place(x=405, y=135)
-        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img) 
-
-
-#    elif check == 0 and len(selected_file_name) != 0: 
-#        print("got here 3")
-#
-#        # test to see if this worked
-#        print("not checked, file selected and plotted")
-#
+        
+#    else:
 #        # path and filename    
 #        file_name = working_path
-#        
+#    
 #        # sets the PRN numr as dropdown selection, sets parameters for prepareDataMonopulse 
 #        prn = int(clicked.get())
 #        plot_correlation = True
@@ -159,36 +131,7 @@ def whichPRN():
 #
 #        # puts an image in the GUI showing whatever is saved as fig1
 #        img = ImageTk.PhotoImage(Image.open('fig1.png'))
-#        
-#        # making the frame for the canvas to sit in
-#        frame = Frame(root, width=img.width() + 12, height=img.height() + 12, bg="#3C3B36")
-#        frame.place(x=400, y=130)        
 #    
-#        # placing a canvas that the image will sit in 
-#        canvas = Canvas(root, width=img.width(), height=img.height())
-#        canvas.place(x=405, y=135)
-#        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img)     
-#    
-#    elif check == 1 and len(selected_file_name) != 0:
-#        print("got here 4")
-#
-#        # test to see if this worked
-#        print("checked, file selected and plotted")     
-#
-#        # path and filename    
-#        file_name = working_path
-#            
-#        # sets the PRN numr as dropdown selection, sets parameters for prepareDataMonopulse 
-#        prn = int(clicked.get())
-#        plot_correlation = True
-#        wire_delay = 7.13e-9 
-#   
-#        # calls prepareDataForMonopulse from tycho's code and plots the correlation
-#        _, corr = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
-#
-#        # puts an image in the GUI showing whatever is saved as fig1
-#        img = ImageTk.PhotoImage(Image.open('fig1.png'))
-#            
 #        # making the frame for the canvas to sit in
 #        frame = Frame(root, width=img.width() + 12, height=img.height() + 12, bg="#3C3B36")
 #        frame.place(x=400, y=130)    
@@ -196,7 +139,66 @@ def whichPRN():
 #        # placing a canvas that the image will sit in 
 #        canvas = Canvas(root, width=img.width(), height=img.height())
 #        canvas.place(x=405, y=135)
-#        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img)
+#        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img) 
+
+
+    elif check.get() == 0 and len(selected_file_name) != 0: 
+        print("got here 3")
+
+        # test to see if this worked
+        print("not checked, file selected and plotted")
+
+        # path and filename    
+        file_name = working_path
+        
+        # sets the PRN numr as dropdown selection, sets parameters for prepareDataMonopulse 
+        prn = int(clicked.get())
+        plot_correlation = True
+        wire_delay = 7.13e-9 
+   
+        # calls prepareDataForMonopulse from tycho's code and plots the correlation
+        _, corr = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_all=False)
+        # puts an image in the GUI showing whatever is saved as fig1
+        img = ImageTk.PhotoImage(Image.open('fig1.png'))
+        
+        # making the frame for the canvas to sit in
+        frame = Frame(root, width=img.width() + 12, height=img.height() + 12, bg="#3C3B36")
+        frame.place(x=400, y=130)        
+    
+        # placing a canvas that the image will sit in 
+        canvas = Canvas(root, width=img.width(), height=img.height())
+        canvas.place(x=405, y=135)
+        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img)     
+    
+    elif check.get() == 1 and len(selected_file_name) != 0:
+        print("got here 4")
+
+        # test to see if this worked
+        print("checked, file selected and plotted")     
+
+        # path and filename    
+        file_name = working_path
+            
+        # sets the PRN numr as dropdown selection, sets parameters for prepareDataMonopulse 
+        #prn = int(clicked.get())
+        prn = int(clicked.get())
+        plot_correlation = True
+        wire_delay = 7.13e-9 
+   
+        # calls prepareDataForMonopulse from tycho's code and plots the correlation
+        _, corr = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_all=True)
+
+        # puts an image in the GUI showing whatever is saved as fig1check_mark = Checkbutton(root, text='Select All', variable=check, onvalue=1, offvalue=0)
+        img = ImageTk.PhotoImage(Image.open('fig1.png'))
+            
+        # making the frame for the canvas to sit in
+        frame = Frame(root, width=img.width() + 12, height=img.height() + 12, bg="#3C3B36")
+        frame.place(x=400, y=130)    
+    
+        # placing a canvas that the image will sit in 
+        canvas = Canvas(root, width=img.width(), height=img.height())
+        canvas.place(x=405, y=135)
+        my_img = canvas.create_image(img.width()/2, img.height()/2, image=img)
 
 # this takes the user input and does things with it
 def seekSatellites():
@@ -239,8 +241,8 @@ clicked.set(prns[0])
 #check = IntVar()
 
 # check mark for all PRNs
-check_mark = Checkbutton(root, text='Select All', variable=check, onvalue=1, offvalue=0)
-check_mark.place(x=50, y=210)
+#check_mark = Checkbutton(root, text='Select All', variable=check, onvalue=1, offvalue=0)
+#check_mark.place(x=50, y=210)
 
 
 # creating menu

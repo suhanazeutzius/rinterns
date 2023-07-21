@@ -19,10 +19,11 @@ plt.style.use('flatirons/flatirons.mplstyle')
 #   prn              : PRN that is being tracked                                    [int]
 #   wire_delay       : delay caused by a longer second wire (seconds)             [float]
 #   plot_correlation : option controlling whether to plot the correlation data      [T/F]
-def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
+#   plot_all        : option controlling if all PRNs are plotted                   [T/F]
+def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_all):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
-    fsample = 2.048e6 # [Hz]
+    fsample = 2.046e6 # [Hz]
     fGPS = 1575.42e6 # [Hz]
     
     # Define physical properties of system
@@ -58,18 +59,35 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     fdoppler = np.floor(Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
     
     # Perform correlation analysis
-    #global prns
-    prns = [prn]
-    _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
-    print("loading...")
-    _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
-    #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
-    fdoppler = np.mean([fdoppler1, fdoppler2])
-    
-    # Extract correlation data for monopulse algorithm
-    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
-    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
+    if plot_all == True:    
+        prns = list(range(1,33))
+        prns.append(prn)
+        prns = [*set(prns)]
+        print(prns)
+        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
+        print("loading...")
+        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
+        fdoppler = np.mean([fdoppler1, fdoppler2])
+ 
+        # Extract correlation data for monopulse algorithm
+        corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
+        corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
+
+
+    else:
+        prns = [prn]
+        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
+        print("loading...")
+        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
+        fdoppler = np.mean([fdoppler1, fdoppler2])
+        
+        # Extract correlation data for monopulse algorithm
+        corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
+        corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
 
     # Return data for monopulse algorithm
     return corr1, corr2
