@@ -2,7 +2,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-import scipy.signal
+import scipy.signal as signal
 
 # Import custom python packages
 from flatirons.gps_gen import *
@@ -73,6 +73,87 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation):
     return corr1, corr2
 
 
+def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
+    """ ! Calculates the phase shift between two antennas using the phases of their correlation vectors.
+
+    @param corr1        Correlation output of reference antenna
+    @param corr2        Correlation output of second antenna
+    @param plot_corr    If true, plot the normalized absolute value of the correlations
+
+    @return             The phase difference between the two correlation vectors.
+
+    @note               Return the opposite of the phase difference that is calculated, because the correlations use
+                        complex conjugates of the signals.
+    """
+    corr1_abs = np.abs(corr1)
+    corr2_abs = np.abs(corr2)
+    c1 = corr1_abs / np.median(corr1_abs)
+    c2 = corr2_abs / np.median(corr2_abs)
+
+    peak_height = 40
+
+    if plot_corr:
+        fig2, ax2 = plt.subplots()
+        ax2.set_xlabel('Correlation Index')
+        ax2.set_ylabel('Correlation Peak Strength')
+        ax2.set_title('Absolute Value of Correlations')
+        # ax2.plot(range(len(corr1)), corr1)
+        # ax2.plot(range(len(corr2)), corr2, '--')
+        ax2.plot(range(len(c1)), c1)
+        ax2.plot(range(len(c2)), c2, '--')
+        plt.axhline(y=peak_height, color='k', linestyle=':')
+        ax2.legend(['Channel 1', 'Channel 2'])
+        plt.show()
+
+    c1_indices, _ = signal.find_peaks(c1, height=peak_height)
+    c2_indices = []
+    to_delete = []
+    for i in range(len(c1_indices)):
+        c2_index = np.array(corr2_abs[c1_indices[i]-5:c1_indices[i]+6]).argmax() + (c1_indices[i] - 5)
+        if c2[c2_index] > peak_height:
+            c2_indices.append(c2_index)
+        else:
+            to_delete.append(i)
+    c1_indices = np.delete(c1_indices, to_delete)
+
+    phase_corr1 = []
+    phase_corr2 = []
+    for i in range(len(c1_indices)):
+        phase_corr1.append(np.angle(corr1[c1_indices[i]]))
+        phase_corr2.append(np.angle(corr2[c2_indices[i]]))
+
+    phase_diff = [phase_corr1[i] - phase_corr2[i] for i in range(len(phase_corr1))]
+
+    for i in range(len(phase_diff)):
+        if phase_diff[i] < 0:
+            phase_diff[i] += (2 * np.pi)
+
+    # print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    print("standard deviation of phase difference: " + str(np.rad2deg(np.std(phase_diff))))
+    # plt.hist(np.rad2deg(phase_diff))
+    # plt.show()
+    phase_diff_avg = np.average(phase_diff)
+    phase_diff_med = np.median(phase_diff)
+
+    print("Average phase: " + str(np.rad2deg(phase_diff_avg)))
+    print("Median phase: " + str(np.rad2deg(phase_diff_med)))
+
+    # get phase diff median between -pi and pi
+    if (phase_diff_med < -np.pi and phase_diff_med > (-2 * np.pi)):
+        phase_diff_med += (2 * np.pi)
+    elif (phase_diff_med > np.pi and phase_diff_med < (2 * np.pi)):
+        phase_diff_med -= (2 * np.pi)
+
+    # get phase diff average between -pi and pi
+    if (phase_diff_avg < -np.pi and phase_diff_avg > (-2 * np.pi)):
+        phase_diff_avg += (2 * np.pi)
+    elif (phase_diff_avg > np.pi and phase_diff_avg < (2 * np.pi)):
+        phase_diff_avg -= (2 * np.pi)
+
+    return -phase_diff_med  # return the opposite of the calculated phase shift
+
+
+
 
 def getPhaseOffset(ch1, ch2, angle=True):
     """Get phase offset between two channels
@@ -82,14 +163,15 @@ def getPhaseOffset(ch1, ch2, angle=True):
     """
     phaseOffsets = []
 
-    median = abs(np.median(ch1))
-    max = abs(np.max(ch1))
-    max_median = max / median
-
-    threshold = 0.90 * max_median
+    max_median1 = abs(np.max(ch1)) / abs(np.median(ch1))
+    max_median2 = abs(np.max(ch2)) / abs(np.median(ch2))
+    median1 =  abs(np.median(ch1))
+    median2 = abs(np.median(ch2))
+    threshold1 = 0.90 * max_median1
+    threshold2 = 0.90 * max_median2
 
     for i in range(len(ch1)):
-        if(abs(ch1[i]/median) > threshold and abs(ch2[i]/median) > threshold):
+        if(abs(ch1[i]/median1) > threshold1 and abs(ch2[i]/median2) > threshold2):
             if(not(angle)):
                 p1 = np.arctan(np.imag(ch1[i]) / np.real(ch1[i]))
                 p2 = np.arctan(np.imag(ch2[i]) / np.real(ch2[i]))
@@ -103,27 +185,15 @@ def getPhaseOffset(ch1, ch2, angle=True):
 
 
 
-def plotPhases(ch1, ch2):
-    figure, ax = plt.subplots(2, 1, sharex=True)
+def plotPhases(phases):
 
-    phase1 = [np.arctan(np.imag(ch1[i])/np.real(ch1[i])) for i in range(len(ch1))]
-    phase2 = [np.arctan(np.imag(ch2[i])/np.real(ch2[i])) for i in range(len(ch2))]
+    figure, axis = plt.subplots(1, 1)
+    axis.set_title("")
+    axis.set_xlabel("")
+    axis.set_ylabel("")
 
-    phase1 = [np.rad2deg(phase) for phase in phase1]
-    phase2 = [np.rad2deg(phase) for phase in phase2]
-
-    t1 = np.linspace(1-len(ch1), len(ch1), len(ch1))
-    t2 = np.linspace(1-len(ch2), len(ch2), len(ch2))
-
-    ax[0].plot(t1, phase1)
-    ax[0].set_title("Phases of Two Channel PRN Correlation")
-    ax[0].set_ylabel("Phase of Rx1 Correlation")
-    ax[1].plot(t2, phase2)
-    ax[1].set_ylabel("Phase of Rx2 Correlation")
-    ax[1].set_xlabel("Index")
-
+    #axis.hist(phases)
     plt.show()
-    
 
 
 
@@ -171,25 +241,29 @@ if __name__ == "__main__":
     # Define data properties
     #combineDevices("/mnt/c/users/ninja/desktop/samples/PRN_5_copper_slave.csv", "/mnt/c/users/ninja/desktop/samples/PRN_5_gray_master.csv", "/mnt/c/users/ninja/desktop/combo.csv")
 
-    file_name = '/home/empire/Desktop/sample_46.csv'
+    file_name = '/home/empire/Desktop/sample.csv'
     prn = 3
     plot_correlation = True
     wire_delay = 0
     
     Rx1, Rx2 = prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation)
 
-    print("Using Angle()...")
-    pOffsets = getPhaseOffset(Rx1, Rx2, angle=True)
-    pOffsets = [np.rad2deg(p) for p in pOffsets]
-    print("NUM: " + str(len(pOffsets)))
-    print("MEAN: " + str(np.mean(pOffsets)))
-    print("MEDIAN: " + str(np.median(pOffsets)))
-    print("STD_DEV: " + str(np.std(pOffsets)))
+    print("Channel Phase:")
+    calc_corr_phase_shift(Rx1, Rx2, True)
 
-    print("Using arctan()...")
-    pOffsets = getPhaseOffset(Rx1, Rx2, angle=False)
-    pOffsets = [np.rad2deg(p) for p in pOffsets]
-    print("NUM: " + str(len(pOffsets)))
-    print("MEAN: " + str(np.mean(pOffsets)))
-    print("MEDIAN: " + str(np.median(pOffsets)))
-    print("STD_DEV: " + str(np.std(pOffsets)))
+#    print("Using Angle()...")
+#    pOffsets = getPhaseOffset(Rx1, Rx2, angle=True)
+#    pOffsets = [np.rad2deg(p) for p in pOffsets]
+
+#    print("NUM: " + str(len(pOffsets)))
+#    print("MEAN: " + str(np.mean(pOffsets)))
+#    print("MEDIAN: " + str(np.median(pOffsets)))
+#    print("STD_DEV: " + str(np.std(pOffsets)))
+
+#    print("Using arctan()...")
+#    pOffsets = getPhaseOffset(Rx1, Rx2, angle=False)
+#    pOffsets = [np.rad2deg(p) for p in pOffsets]
+#    print("NUM: " + str(len(pOffsets)))
+#    print("MEAN: " + str(np.mean(pOffsets)))
+#    print("MEDIAN: " + str(np.median(pOffsets)))
+#    print("STD_DEV: " + str(np.std(pOffsets)))
