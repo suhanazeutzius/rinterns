@@ -72,7 +72,7 @@ def gen_sim_signals(e1, a1, fsample):
 #   rx2_offset       : hardware phase offset of channel 2 (radians)               [float]
 #   rx3_offset       : hardware phase offset of channel 3 (radians)               [float]
 #   rx4_offset       : hardware phase offset of channel 4 (radians)               [float]
-def prepareDataForMonopulse(file_name, prn, plot_correlation, rx2_offset=0, rx3_offset=0, rx4_offset=0):
+def prepareDataForMonopulse_4(file_name, prn, plot_correlation, rx2_offset=0, rx3_offset=0, rx4_offset=0):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
     fsample = 2.046e6 # [Hz]
@@ -142,21 +142,12 @@ def prepareDataForMonopulse(file_name, prn, plot_correlation, rx2_offset=0, rx3_
     corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
     corr3 = correlateForMonopulse(sig3, fsample, fdoppler, prn, 'Rx 3', plot=False)
     corr4 = correlateForMonopulse(sig4, fsample, fdoppler, prn, 'Rx 4', plot=False)
-    # corr1_abs = np.abs(corr1)
-    # corr2_abs = np.abs(corr2)
-    # c1 = corr1_abs / np.median(corr1_abs)
-    # c2 = corr2_abs / np.median(corr2_abs)
-    # fig2, ax2 = plt.subplots()
-    # ax2.plot(range(len(c2)), c2, '--')
-    # ax2.plot(range(len(c1)), c1)
-    # plt.title("absolute value of correlations")
-    # plt.show()
 
     # Return data for monopulse algorithm
     return corr1, corr2, corr3, corr4
 
 
-def prepareDataForMonopulse_2(file_name, prn, plot_correlation, rx2_offset=0, rx3_offset=0, rx4_offset=0):
+def prepareDataForMonopulse(file_name, prn, plot_correlation, rx2_offset=0, rx3_offset=0, rx4_offset=0):
     # Define frequencies
     fcenter_SDR = 1575.42e6  # [Hz]
     fsample = 2.046e6  # [Hz]
@@ -166,7 +157,7 @@ def prepareDataForMonopulse_2(file_name, prn, plot_correlation, rx2_offset=0, rx
     Rearth = 6378e3  # [m]
     hGPS = 20200e3  # [m]
     Vsat = 929  # [m/s]
-    max_elevation_angle = np.deg2rad(26.3)
+    max_elevation_angle = np.deg2rad(35)
 
     # Define constants
     c = 299792458  # [m/s]
@@ -190,10 +181,7 @@ def prepareDataForMonopulse_2(file_name, prn, plot_correlation, rx2_offset=0, rx
     sig2 = filterSignal((fGPS - fcenter_SDR), fsample, sig2, ['fir', 'lowpass'], bandwidth=1e6, order=100)
 
     # Calculate maximum doppler shift
-    Rgps = Rearth + hGPS  # [m]
-    Rsat = np.sqrt((Rearth ** 2) + (Rgps ** 2) - (2 * Rearth * Rgps * np.cos(max_elevation_angle)))
-    alpha = math.pi - np.arcsin(np.sin(max_elevation_angle) * Rgps / Rsat)  # [rad]
-    slant_angle = alpha - (math.pi / 2)  # [rad]
+    slant_angle = (np.pi/2)-max_elevation_angle
     fdoppler = np.floor(Vsat * np.cos(slant_angle) * fGPS / c)  # [Hz]
 
     # Perform correlation analysis
