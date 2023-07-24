@@ -8,12 +8,6 @@
 
 int test_syncstream_handle_csv(struct bladerf *dev1, struct bladerf *dev2, struct stream_config st_config){
 
-    printf("[dev1] Enabling channels\n");
-    if(channel_enable(dev1)) return -1;
-
-    printf("[dev2] Enabling channels\n");
-    if(channel_enable(dev2)) return -1;
-
     /* configure streams */
 
     printf("[dev1, dev2] Initializing syncstream...\n");
@@ -41,15 +35,7 @@ int test_syncstream_handle_csv(struct bladerf *dev1, struct bladerf *dev2, struc
 
 
 int test_syncstream_handle_buffers(struct bladerf *dev1, struct bladerf *dev2, struct stream_config st_config){
-
-    /* enable channels */
-
-    printf("[dev1] Enabling channels\n");
-    if(channel_enable(dev1)) return -1;
-
-    printf("[dev2] Enabling channels\n");
-    if(channel_enable(dev2)) return -1;
-    
+ 
     /* configure streams */
  
     printf("[dev1, dev2] Initializing syncstream...\n");
@@ -108,13 +94,13 @@ int main(){
     struct channel_config ch_config;
     ch_config.gainmode = BLADERF_GAIN_SLOWATTACK_AGC;
     ch_config.gain = 0;
-    ch_config.samplerate = 30690000;
+    ch_config.samplerate = 20460000;
     ch_config.bandwidth = 18000000;
-    ch_config.frequency = 905000000;
-    ch_config.biastee = true;
+    ch_config.frequency = 1575420000;
+    ch_config.biastee = false;
 
     struct stream_config st_config;
-    st_config.num_samples = 307200;
+    st_config.num_samples = 204600;
     st_config.num_buffers = 16;
     st_config.buffer_size = 2048;
     st_config.num_transfers = 8;

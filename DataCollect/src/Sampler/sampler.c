@@ -51,7 +51,7 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
 	int status;
 
     /* init sampler */
-    status = sampler_init(master_dev, slave_dev, ch_config);
+    status = _sampler_init(master_dev, slave_dev, ch_config);
     if(status != 0) goto exit_fail;
 
     /* init triggers */
@@ -119,7 +119,7 @@ int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, stru
 	int status;
 
     /* init sampler */
-    status = sampler_init(master_dev, slave_dev, ch_config);
+    status = _sampler_init(master_dev, slave_dev, ch_config);
     if(status != 0) goto exit_fail;
 
     /* init triggers */
@@ -129,8 +129,8 @@ int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, stru
 
     /* start init syncstream*/
     pthread_t syncstream_thread;
-    syncstream_task_arg syncstream_arg = {st_config, master_dev, slave_dev};    
-    pthread_create(&syncstream_thread, NULL, syncstream_init_task, &styncstream_arg);
+    struct syncstream_task_arg syncstream_arg = {st_config, master_dev, slave_dev};    
+    pthread_create(&syncstream_thread, NULL, syncstream_init_task, &syncstream_arg);
 
     /* start fire trigger task */
     pthread_t trigger_thread;
@@ -138,8 +138,8 @@ int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, stru
     pthread_create(&trigger_thread, NULL, trigger_fire_task, &trigger_arg);
 
     /* join threads */
-    pthread_join(trigger_thread);
-    pthread_join(syncstream_thread);
+    pthread_join(trigger_thread, NULL);     // TODO add returns to threads for error
+    pthread_join(syncstream_thread, NULL);  // TODO add returns to threads for error
 
     /* handle syncstream */
     status = syncstream_handle_csv(master_dev, slave_dev, "sample.csv");

@@ -35,7 +35,7 @@ else
 CC = $(ARM_GCC_ROOT_PATH)/bin/arm-none-linux-gnueabihf-gcc
 endif
 
-CFLAGS = -g -W -I $(INCLUDE_PATH) -I $(COMMON_INCLUDE_PATH) -I $(LOCAL_INCLUDE_PATH) -I $(LIBBLADERF_INCLUDE_PATH)
+CFLAGS = -g -W -pthread -I $(INCLUDE_PATH) -I $(COMMON_INCLUDE_PATH) -I $(LOCAL_INCLUDE_PATH) -I $(LIBBLADERF_INCLUDE_PATH)
 LFLAGS = -L:$(LIBBLADERF_LD_PATH) -l:libbladeRF.so -l:libbladeRF.so.2
 
 

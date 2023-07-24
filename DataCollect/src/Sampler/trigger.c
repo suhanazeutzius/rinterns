@@ -148,8 +148,8 @@ void *trigger_fire_task(void *arg){
     status = bladerf_trigger_fire(dev, trig);
     if(status != 0){
         fprintf(stderr, "Failed to fire master trigger: %s\n", bladerf_strerror(status));
-        return status;
+        return NULL;    // TODO add return values
     }
 
-    return trig;
+    return NULL;        // TODO add return values
 }

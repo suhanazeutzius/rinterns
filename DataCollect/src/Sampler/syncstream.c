@@ -97,7 +97,7 @@ int _syncstream_init_buffers(struct stream_config st_config){
  **/
 void *syncstream_init_task(void *arg){
 
-    if(!arg) return NULL;
+    if(!arg) return NULL;   // TODO: add return value
 
     /* unpack args */
     struct syncstream_task_arg *args = (struct syncstream_task_arg*)arg;
@@ -110,11 +110,11 @@ void *syncstream_init_task(void *arg){
     /* config sync streams */
 
     status = _syncstream_init_config(master_dev, slave_dev, st_config);
-    if(status != 0) return NULL;
+    if(status != 0) return NULL;   // TODO: add return value
 
     /* configure buffers */
     status = _syncstream_init_buffers(st_config);
-    if(status != 0) return NULL;
+    if(status != 0) return NULL;   // TODO: add return value
 
     /* enable RF front ends */
 
@@ -125,22 +125,22 @@ void *syncstream_init_task(void *arg){
     if(status != 0) goto exit_free_memory;
 
     /* allocate master block and slave block buffers */
-    master_samples = malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
-    if(!samples){
+    int16_t *master_samples = (int16_t*)malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+    if(!master_samples){
         fprintf(stderr, "Failed to allcoate master block: %s\n", BLADERF_ERR_MEM);
         goto exit_free_memory;
     }
 
-    slave_samples = malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
-    if(!samples){
+    int16_t *slave_samples = (int16_t*)malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+    if(!slave_samples){
         fprintf(stderr, "Failed to allocate slave block: %s\n", BLADERF_ERR_MEM);
         goto exit_free_memory;
     }
 
-    int master_samples_read = 0, slave_samples_read = 0;
+    unsigned int master_samples_read = 0, slave_samples_read = 0;
 
     /* continue read until all samples are filled */
-    while(status == 0 && (samples_read < num_samples)){
+    while(status == 0 && (master_samples_read < st_config.num_samples)){
         int mstatus = bladerf_sync_rx(master_dev, master_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
         int sstatus = bladerf_sync_rx(slave_dev, slave_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
 
@@ -175,7 +175,7 @@ exit_free_memory:
 	free(master_buffer);
 	master_buffer = NULL;
 	master_buffer_len = 0;
-	return NULL;
+	return NULL;   // TODO: add return value
 }
 
 
