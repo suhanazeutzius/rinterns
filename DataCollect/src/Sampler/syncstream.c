@@ -1,18 +1,14 @@
 #include "syncstream.h"
 
 /**
- * initialize and begin a sync rx stream
+ * config syncstreams
  *
  * @param struct bladerf *master_dev -- master device
  * @param struct bladerf *slave_dev -- slave device
  * @param struct stream_config st_config -- stream configuration parameter struct
  * @return int -- returns 0 on success, bladerf error code on failure
- *
- * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
- * Note: enusre that timeout_ms parameter leaves enough time to cover latency between
- * this call and call to trigger_fire()
  **/
-int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config){
+int _syncstream_init_config(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config){
 
     int status;
 
@@ -31,6 +27,21 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
         fprintf(stderr, "Failed to configure slave stream: %s\n", bladerf_strerror(status));
         return status;
     }
+
+    return 0;
+}
+
+
+
+
+
+/**
+ * check and allocate buffers
+ *
+ * @param struct stream_config st_config -- stream configuration parameter struct
+ * @return int -- returns 0 on success, bladerf error code on failure
+ **/
+int _syncstream_init_buffers(struct stream_config st_config){
 
     /* check master/slave buffers */
 
@@ -68,6 +79,133 @@ int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struc
         return BLADERF_ERR_MEM;
     }
     slave_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
+
+    return 0;
+}
+
+
+
+
+
+/**
+ * run syncstream_init with threads
+ *
+ * @param void *arg -- interpreted as pointer to synstream_task_arg struct
+ * @return void*
+ *
+ * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
+ **/
+void *syncstream_init_task(void *arg){
+
+    if(!arg) return NULL;
+
+    /* unpack args */
+    struct syncstream_task_arg *args = (struct syncstream_task_arg*)arg;
+    struct stream_config st_config = args->st_config;
+    struct bladerf *master_dev = args->master_dev;
+    struct bladerf *slave_dev = args->slave_dev;
+
+    int status;
+
+    /* config sync streams */
+
+    status = _syncstream_init_config(master_dev, slave_dev, st_config);
+    if(status != 0) return NULL;
+
+    /* configure buffers */
+    status = _syncstream_init_buffers(st_config);
+    if(status != 0) return NULL;
+
+    /* enable RF front ends */
+
+    status = channel_enable(master_dev);
+    if(status != 0) goto exit_free_memory;
+
+    status = channel_enable(slave_dev);
+    if(status != 0) goto exit_free_memory;
+
+    /* allocate master block and slave block buffers */
+    master_samples = malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+    if(!samples){
+        fprintf(stderr, "Failed to allcoate master block: %s\n", BLADERF_ERR_MEM);
+        goto exit_free_memory;
+    }
+
+    slave_samples = malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+    if(!samples){
+        fprintf(stderr, "Failed to allocate slave block: %s\n", BLADERF_ERR_MEM);
+        goto exit_free_memory;
+    }
+
+    int master_samples_read = 0, slave_samples_read = 0;
+
+    /* continue read until all samples are filled */
+    while(status == 0 && (samples_read < num_samples)){
+        int mstatus = bladerf_sync_rx(master_dev, master_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
+        int sstatus = bladerf_sync_rx(slave_dev, slave_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
+
+        if(mstatus != 0 && sstatus != 0){
+            //TODO
+        }
+        else{
+            /* get num samples to write */
+            size_t to_write_master = st_config.buffer_size < (st_config.num_samples - master_samples_read) ? st_config.buffer_size : (st_config.num_samples - master_samples_read);
+            size_t to_write_slave = st_config.buffer_size < (st_config.num_samples - slave_samples_read) ? st_config.buffer_size : (st_config.num_samples - slave_samples_read);
+
+            /* write samples to buffer */
+            //TODO
+        }
+        master_samples_read += st_config.buffer_size;
+        slave_samples_read += st_config.buffer_size; 
+    }
+
+    /* free block buffers */
+    if(master_samples) free(master_samples);
+    if(slave_samples) free(slave_samples);
+
+    /* return 0 on success */
+
+    return 0;
+
+exit_free_memory:
+	free(slave_buffer);
+	slave_buffer = NULL;
+	slave_buffer_len = 0;
+
+	free(master_buffer);
+	master_buffer = NULL;
+	master_buffer_len = 0;
+	return NULL;
+}
+
+
+
+
+
+/**
+ * initialize and begin a sync rx stream
+ *
+ * @param struct bladerf *master_dev -- master device
+ * @param struct bladerf *slave_dev -- slave device
+ * @param struct stream_config st_config -- stream configuration parameter struct
+ * @return int -- returns 0 on success, bladerf error code on failure
+ *
+ * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
+ * Note: enusre that timeout_ms parameter leaves enough time to cover latency between
+ * this call and call to trigger_fire()
+ **/
+int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config){
+
+    int status;
+
+    /* config sync streams */
+
+    status = _syncstream_init_config(master_dev, slave_dev, st_config);
+    if(status != 0) return status;
+
+    /* configure buffers */
+    status = _syncstream_init_buffers(st_config);
+    if(status != 0) return status;
 
     /* enable RF front ends */
 

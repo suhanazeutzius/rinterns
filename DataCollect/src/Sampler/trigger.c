@@ -122,3 +122,34 @@ int trigger_fire(struct bladerf *master_dev, struct bladerf_trigger *master_trig
 
 	return 0;
 }
+
+
+
+
+
+/**
+ * task for firing trigger
+ *
+ * @param void *arg -- will be interpreted as pointer to trigger_task_arg struct
+ * @return NULL on failure, trigger pointer on success
+ *
+ * @brief unpacks void *arg into device and trigger, fires trigger
+ **/ 
+void *trigger_fire_task(void *arg){
+
+    if(!arg) return NULL;
+
+    /* unpack arguments */
+    struct bladerf *dev = ((struct trigger_task_arg*)arg)->dev;
+    struct bladerf_trigger *trig = ((struct trigger_task_arg*)arg)->trig;
+
+    int status;
+
+    status = bladerf_trigger_fire(dev, trig);
+    if(status != 0){
+        fprintf(stderr, "Failed to fire master trigger: %s\n", bladerf_strerror(status));
+        return status;
+    }
+
+    return trig;
+}
