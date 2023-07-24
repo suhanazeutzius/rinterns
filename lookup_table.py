@@ -13,6 +13,33 @@ from flatirons.parse import *
 plt.style.use('flatirons/flatirons.mplstyle')
 
 
+def makeLookupTable_3element(d, wavelength, max_el, max_az, step=2):
+    """ ! Generates a lookup table of expected phase shifts between a reference element and all other
+            elements in an isosceles right triangle array for all angles in range.
+
+        @param d            The distance between antennas.
+        @param wavelength   The wavelength of the signal to be received.
+        @param max_el       The maximum elevation angle to calculate.
+        @param max_az       The maximum azimuth angle to calculate.
+        @param step         The step size between angles. Defaults to 2.
+
+        @return            A dictionary with keys of form (elevation, azimuth) and values of the expected
+                            phase shifts from a reference antenna to all other antennas.
+        """
+    table = {}
+    # calculate phase shift for each antenna, using antenna 1 as a reference
+    for elevation_angle in range(0, max_el, step):  # elevation angles
+        for azim_angle in range(0, max_az, step):  # azimuth angles
+            az_angle = np.deg2rad(azim_angle)
+            elev_angle = np.deg2rad(elevation_angle)
+            d2 = d * np.cos(az_angle)
+            p2 = ((2 * np.pi * d2) / wavelength) * np.sin(elev_angle)
+            d3 = d * np.sin(az_angle)
+            p3 = ((2 * np.pi * d3) / wavelength) * np.sin(elev_angle)
+            table[elevation_angle, azim_angle] = [round(p2, 3), round(p3, 3)]
+    return table
+
+
 def makeLookupTable(d, wavelength, max_el, max_az, step=2):
     """ ! Generates a lookup table of expected phase shifts between a reference element and all other
         elements in a 2x2 square array for all angles in range.
@@ -168,18 +195,19 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
     c1 = corr1_abs / np.median(corr1_abs)
     c2 = corr2_abs / np.median(corr2_abs)
 
-    if plot_corr:
-        fig2, ax2 = plt.subplots()
-        ax2.set_xlabel('Correlation Index')
-        ax2.set_ylabel('Correlation Peak Strength')
-        ax2.set_title('Absolute Value of Correlations')
-        # ax2.plot(range(len(corr1)), corr1)
-        # ax2.plot(range(len(corr2)), corr2, '--')
-        ax2.plot(range(len(c1)), c1)
-        ax2.plot(range(len(c2)), c2, '--')
-        plt.axhline(y=7.5, color='k', linestyle=':')
-        ax2.legend(['Channel 1', 'Channel 2'])
-        plt.show()
+    # if plot_corr:
+    #     fig2, ax2 = plt.subplots(2)
+    #     ax2[0].set_xlabel('Correlation Index')
+    #     ax2[0].set_ylabel('Correlation Peak Strength')
+    #     ax2[0].set_title('Absolute Value of Correlations')
+    #     # ax2.plot(range(len(corr1)), corr1)
+    #     # ax2.plot(range(len(corr2)), corr2, '--')
+    #     ax2[0].plot(range(len(c1)), c1)
+    #     ax2[0].plot(range(len(c2)), c2, '--')
+    #     ax2[1].plot(range(len(phase_diff)), np.rad2deg(phase_diff))
+    #     plt.axhline(y=7.5, color='k', linestyle=':')
+    #     ax2.legend(['Channel 1', 'Channel 2'])
+    #     plt.show()
 
     peak_height = 7.5
     c1_indices, _ = signal.find_peaks(c1, height=peak_height)
@@ -199,6 +227,7 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
         phase_corr1.append(np.angle(corr1[c1_indices[i]]))
         phase_corr2.append(np.angle(corr2[c2_indices[i]]))
 
+    # phase_diff = [0] * len(c1)
     phase_diff = [phase_corr1[i] - phase_corr2[i] for i in range(len(phase_corr1))]
 
     for i in range(len(phase_diff)):
@@ -207,7 +236,25 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
 
     # print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
     print("standard deviation of phase difference: " + str(np.rad2deg(np.std(phase_diff))))
-    # plt.hist(np.rad2deg(phase_diff))
+    if plot_corr:
+        fig2, ax2 = plt.subplots(2)
+        ax2[0].set_xlabel('Correlation Index')
+        ax2[0].set_ylabel('Correlation Peak Strength')
+        ax2[0].set_title('Absolute Value of Correlations')
+        ax2[0].set_xlim(0, len(c1))
+        # ax2.plot(range(len(corr1)), corr1)
+        # ax2.plot(range(len(corr2)), corr2, '--')
+        ax2[0].plot(range(len(c1)), c1)
+        ax2[0].plot(range(len(c2)), c2, '--')
+        ax2[0].axhline(y=7.5, color='k', linestyle=':')
+        ax2[0].legend(['Channel 1', 'Channel 2'])
+        ax2[1].set_xlim(0, len(c1))
+        ax2[1].plot(c1_indices, np.rad2deg(phase_diff), 'o-')
+        plt.show()
+
+    # fig1, ax1 = plt.subplots(2)
+    # ax1[0].hist(np.rad2deg(phase_diff))
+    # ax1[1].plot(range(len(phase_diff)), np.rad2deg(phase_diff))
     # plt.show()
     phase_diff_avg = np.average(phase_diff)
     phase_diff_med = np.median(phase_diff)
@@ -254,6 +301,29 @@ def calc_AoA_corr(corr1, corr2, corr3, corr4, lookup_table, plot_corr=False):
     return elevation_angle, azimuth_angle
 
 
+def calc_corr_AoA_3element(phase12, phase13, lookup_table, plot_corr=False):
+    """ ! Calculates the angle of arrival from the lookup table.
+
+    @param corr1            Correlation vector for signal 1
+    @param corr2            Correlation vector for signal 2
+    @param corr3            Correlation vector for signal 3
+    @param corr4            Correlation vector for signal 4
+    @param lookup_table     Lookup table of expected phase shifts for each angle of arrival.
+
+    @return                 Angle of arrival of the signal as a tuple.
+    """
+    # split up dictionary into angles and phases
+    angle_list = list(lookup_table.keys())
+    phase_list = list(lookup_table.values())
+    # calculate phase shifts
+    # phase12 = calc_corr_phase_shift(corr1, corr2)
+    # phase13 = calc_corr_phase_shift(corr1, corr3)
+    position = find_nearest_index(phase_list, [round(phase12, 3), round(phase13, 3)])
+    elevation_angle = angle_list[position][0]
+    azimuth_angle = angle_list[position][1]
+    return elevation_angle, azimuth_angle
+
+
 def calc_Aoa_corr_2d(corr1, corr2, plot=False):
     phase_diff = calc_corr_phase_shift(corr1, corr2, plot_corr=plot)
     elevation_angle = np.arcsin((phase_diff * wavelength) / (2 * np.pi * d))
@@ -268,7 +338,7 @@ if __name__ == "__main__":
     # setup
     wavelength = 0.1905  # meters
     d = wavelength / 2
-    lookup_table = makeLookupTable(d, wavelength, 27, 360, step=1)
+    # lookup_table = makeLookupTable(d, wavelength, 27, 360, step=1)
     # sig1 = makeGPSClean(7, num_periods=2, sample_rate=2.046e6)  # generate a reference signal
     # signals = gen_shifted_signals(sig1, elevation=10, azimuth=15)  # simulate a phase shift for other elements
 
@@ -283,13 +353,31 @@ if __name__ == "__main__":
     # print("Azimuth angle: " + str(azim))
 
     # testing on real data (2 channel)
+    # f = open('data.csv', 'w')
+    # csv_files = ['data/Samples_Jul_20/PRN20_Rx2_Rx1_gray_newcable.csv']
+    # for filename in csv_files:
+    #     with open(filename) as open_csv:
+    #         for line in open_csv:
+    #             f.write(line)
+    # # Close the output file
+    # f.close()
+    lookup_table = makeLookupTable_3element(d, wavelength, 35, 360)
     phase_ch_2 = np.deg2rad(25)
-    filename = 'data/Samples_Jul_18/PRN_11_Rx2_Rx1.csv'
-    prn = 5
+    filename = 'data/Samples_Jul_21/PRN12_Rx1_Rx2_copper_short.csv'
+    prn = 12
+    corr1, corr3 = prepareDataForMonopulse_2(filename, prn, False, phase_ch_2)
+    # phase_diff, theta = calc_Aoa_corr_2d(corr1, corr2, plot=True)
+    phase13 = calc_corr_phase_shift(corr1, corr3)
+    filename = 'data/Samples_Jul_21/PRN12_Rx1_Rx2_copper_short(2).csv'
+    # phase_ch_2 = np.deg2rad(19)
+    prn = 12
     corr1, corr2 = prepareDataForMonopulse_2(filename, prn, False, phase_ch_2)
-    phase_diff, theta = calc_Aoa_corr_2d(corr1, corr2, plot=False)
-    print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
-    print("Calculated elevation angle: " + str(np.rad2deg(theta)))
+    phase12 = calc_corr_phase_shift(corr1, corr2)
+    e, a = calc_corr_AoA_3element(phase12, phase13, lookup_table, plot_corr=False)
+    print("Elevation angle: " + str(e))
+    print("Azimuth angle: " + str(a))
+    # print("Calculated phase difference: " + str(np.rad2deg(phase_diff)))
+    # print("Calculated elevation angle: " + str(np.rad2deg(theta)))
 
     # # testing on real data (4 channel)
     # phase_copper = 25

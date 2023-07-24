@@ -25,7 +25,7 @@ from flatirons.gps_gen import *
 #   corr         : correlation coefficient vector     [numpy array of type complex_]
 def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
-    ca = makeGPSClean(prn, num_periods=10, sample_rate=sample_rate)
+    ca = makeGPSClean(prn, num_periods=20, sample_rate=sample_rate)
 
     # Perform correlation
     corr = scipy.signal.correlate(ca, signal)
