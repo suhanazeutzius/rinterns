@@ -151,6 +151,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
 
     # Define doppler frequency shift range
     if freq_range is None:
+        fdopper=5000
         freq_range = np.arange(-fdoppler, fdoppler, freq_step)
 
     # Instantiate matrix to store maximum correlation values

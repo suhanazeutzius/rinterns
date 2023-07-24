@@ -90,7 +90,7 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
     c1 = corr1_abs / np.median(corr1_abs)
     c2 = corr2_abs / np.median(corr2_abs)
 
-    peak_height = 40
+    peak_height = 8
 
     if plot_corr:
         fig2, ax2 = plt.subplots()
@@ -241,8 +241,8 @@ if __name__ == "__main__":
     # Define data properties
     #combineDevices("/mnt/c/users/ninja/desktop/samples/PRN_5_copper_slave.csv", "/mnt/c/users/ninja/desktop/samples/PRN_5_gray_master.csv", "/mnt/c/users/ninja/desktop/combo.csv")
 
-    file_name = '/home/empire/Desktop/sample.csv'
-    prn = 3
+    file_name = '/mnt/c/users/ninja/desktop/samples/PRN10_copper9.csv'
+    prn = 10
     plot_correlation = True
     wire_delay = 0
     
