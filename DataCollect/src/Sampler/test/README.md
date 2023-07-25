@@ -1,130 +1,174 @@
 # Sampler Testing
 
-Overview of testing methods for each submodule of the Sampler program.
+Overview of testing methods for each component of the Sampler program.
 
 Use Makefile commands to compile testers for each component individually. Most follow the pattern ```make <module>``` (ex. make clock). Compiles into executable ```test``` that can be run once both devices are connected correctly.
 
-### List of make commands:
+## List of make commands:
 
 - make channel
 - make clock
 - make trigger
 - make trigger_single
-- make trigger_syncstreams
+- make trigger_multi
+- make trigger_syncstream
 - make syncstream
 - make sampler
+- make sampler\_threaded
+- make lowlevel
 - make all
 - make clean
 
+</br>
+</br>
+
+---
+
+### Channel Test
+
+1. test channel\_init()
+    1. create channel config & call function
+    2. check function return
+    3. use getters to check parameters are set to expected values
+2. test channel\_enable()
+    1. call function
+    2. check function return
+3. test channel\_disable()
+    1. call function
+    2. check function return
+
+
+</br>
+</br>
+
+### Clock Test
+
+1. test clock\_init()
+    1. call function
+    2. check function return
+    3. use getters to check clock states are set to expected values
 
 </br>
 </br>
 
 ---
 
-## Channel
+### Trigger Test
 
-1. Open devices
-2. Call channel\_init() with regular config values
-3. Use API getters to check gpio config matches channel config
-4. Call channel\_enable()
-5. Check status of front end modules to ensure they are enabled
-6. Call channel\_disable()
-7. Check status of front end modules to ensure they are disabled
-8. Close devices
-
-</br>
-</br>
-
----
-
-## Clock
-
-1. Open devices
-2. Call clock\_init()
-3. Use API getters to check gpio config matches clock config
-4. Close device
+1. test trigger\_init()
+    1. call function
+    2. check function return
+    3. use getters to check trigger states are set to expected values
+    4. directly read registers to check trigger states are set to expected values
+2. test trigger\_fire()
+    1. call function
+    2. check function return
+    3. use getters to check trigger states are set to expected values
+3. test trigger\_deinit()
+    1. call function
+    2. check function return
+    3. use getters to check trigger states are set to expected values
 
 </br>
 </br>
 
 ---
 
-## Trigger
+### Trigger Single Test
 
-1. Open devices
-2. Call trigger\_init()
-3. Use API triggers state fn to check triggers match config
-4. Call trigger\_fire() w/ mini expansion disconnected
-5. Check with oscilloscope that the mini expansion changed state on master
-6. Configure a Rx stream on slave & master
-7. Call trigger\_fire() w/ mini expansion connected
-8. Check that both streams are recieved
-9. Call trigger\_deinit()
-10. Use API triggers state fn to check triggers match disabled state
-11. Close devices
+1. fires a trigger on a single device. Meant for oscilloscope debugging of a single
+device.
 
 </br>
 </br>
 
 ---
 
-## Trigger Single
+### Trigger Multi Test
 
-1. Open device
-2. Initialize, arm master trigger
-3. Fire trigger
-4. Measure trigger with oscope
-5. Disarm trigger
-6. Close device
+1. fires a trigger on master device with slave configred to recieve trigger. No stream
+configured. Intended for oscilloscope debugging.
 
 </br>
 </br>
 
 ---
 
-## Trigger Syncstream
+### Syncstream Test
 
-1. Open device
-2. initialize, arm slave trigger
-3. Initialize rx sycstream
-4. Externally drop trigger level
-5. Recieve to buffer & check for empty buffer
-6. Disarm trigger
-7. Close device
-
-</br>
-</br>
-
----
-
-## Syncstream
-
-1. Open devices
-2. Initialize channels
-3. Enable channels
-4. Call syncstream\_init()
-5. Call syncstream\_handle\_csv(), writing to a file to be checked later
-6. Disable channel
-7. Enable channels
-7. Call syncstream\_init()
-8. Call syncstream\_handle\_buffers(), and check buffers for data
-9. Disable channel
-10. Close devices
+1. test syncstream\_handle\_csv()
+    1. call syncstream\_init()
+    2. check function return
+    3. call syncstream\_handle\_csv()
+    4. check function return
+    5. "sample.csv" should appear with collected data
+2. test syncstream\_handle\_buffers()
+    1. call syncstream\_init()
+    2. check functionr return
+    3. call syncstream\_handle\_buffers()
+    4. check function return
+    5. check that all buffers are appopriately filled
 
 </br>
 </br>
 
 ---
 
-## Sampler
+### Trigger Syncstream Test
 
-1. Open devices
-2. Setup device and stream configurations
-3. Run sampler
-4. Check return value
-5. Close devices
-6. Check output csv file
+1. Uses triggers to initiate a syncstream with one device, which is configured as
+slave expecting an external trigger source (pull pin low).
+
+</br>
+</br>
+
+---
+
+### Trigger Syncstream Master Test
+
+1. Uses triggers to initiate a syncstream with one device, which is configred as master.
+
+</br>
+</br>
+
+---
+
+### Sampler Test
+
+1. calls sampler()
+2. check function return
+3. check for output csv file
+
+</br>
+</br>
+
+---
+
+### Sampler Threaded Test
+
+1. calls sampler\_threaded()
+2. check function return
+3. check for output csv file
+
+</br>
+</br>
+
+---
+
+### Low Level Test
+
+1. Calls pll\_state() and clock\_vctcxo\_state(0
+2. check function return
+3. prints values for inspection
+
+</br>
+</br>
+
+---
+
+### All Test
+
+TODO
 
 </br>
 </br>

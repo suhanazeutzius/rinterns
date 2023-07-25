@@ -76,6 +76,10 @@ syncstream: $(SOURCES) Makefile test_syncstream.c
 sampler: $(SOURCES) Makefile test_sampler.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_sampler.c -o ./test
 
+## test sampler threaded
+sampler_threaded: $(SOURCES) Makefile test_sampler_threaded.c
+	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_sampler_threaded.c -o ./test
+
 ## test pll
 lowlevel: $(SOURCES) Makefile test_lowlevel.c
 	@$(CC) $(CFLAGS) $(SOURCES) $(LFLAGS) test_lowlevel.c -o ./test
