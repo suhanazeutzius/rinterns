@@ -178,7 +178,7 @@ def calc_AoA_monopulse(signals):
     return theta_az, theta_el
 
 
-def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
+def calc_corr_phase_shift(corr1, corr2, plot_corr=True):
     """ ! Calculates the phase shift between two antennas using the phases of their correlation vectors.
 
     @param corr1        Correlation output of reference antenna
@@ -238,11 +238,19 @@ def calc_corr_phase_shift(corr1, corr2, plot_corr=False):
         ax2[1].plot(c1_indices, np.rad2deg(phase_diff), 'o-')
         plt.show()
 
-    phase_diff_avg = np.average(phase_diff)
-    phase_diff_med = np.median(phase_diff)
+    if max(phase_diff) > np.deg2rad(345) and min(phase_diff) < np.deg2rad(15):
+        for i in range(len(phase_diff)):
+            if phase_diff[i] < np.pi / 2:
+                phase_diff[i] += 2 * np.pi
 
-    # print("Average phase: " + str(np.rad2deg(phase_diff_avg)))
-    # print("Median phase: " + str(np.rad2deg(phase_diff_med)))
+    print([np.rad2deg(phase_diff[i]) for i in range(len(phase_diff))])
+    print("standard deviation of phase difference: " + str(np.rad2deg(np.std(phase_diff))))
+
+    phase_diff_avg = np.average(phase_diff) % (2 * np.pi)
+    phase_diff_med = np.median(phase_diff) % (2 * np.pi)
+
+    print("Average phase: " + str(np.rad2deg(phase_diff_avg)))
+    print("Median phase: " + str(np.rad2deg(phase_diff_med)))
 
     # get phase diff median between -pi and pi
     if (phase_diff_med < -np.pi and phase_diff_med > (-2 * np.pi)):
@@ -286,13 +294,14 @@ def calc_AoA_corr_4element(corr1, corr2, corr3, corr4, lookup_table, plot_corr=F
 def calc_corr_AoA(file12, file13, prn, phase_ch_2, lookup_table, plot_corr=False):
     """ ! Calculates the angle of arrival from the lookup table.
 
-    @param corr1            Correlation vector for signal 1
-    @param corr2            Correlation vector for signal 2
-    @param corr3            Correlation vector for signal 3
-    @param corr4            Correlation vector for signal 4
-    @param lookup_table     Lookup table of expected phase shifts for each angle of arrival.
+    @param file12               Data from antenna 1 and 2
+    @param file13               Data from antenna 1 and 3
+    @param prn                  PRN code to correlate to
+    @param phase_ch_2           Phase offset between blade channels
+    @param lookup_table         Table of expected phase shifts for each angle of arrival
+    @param plot_corr            Option to plot correlation graphs
 
-    @return                 Angle of arrival of the signal as a tuple.
+    @return                     Elevation and azimuth angles of incoming signals
     """
     # split up dictionary into angles and phases
     angle_list = list(lookup_table.keys())
@@ -327,10 +336,10 @@ if __name__ == "__main__":
     lookup_table = makeLookupTable(d, wavelength, 35, 360)
 
     # parameters for calc_corr_AoA
-    file12 = 'data/Samples_Jul_21/PRN5_Rx1_Rx2_copper(2).csv'  # data for antennas 1 and 2
-    file13 = 'data/Samples_Jul_21/PRN5_Rx1_Rx2_copper.csv'  # data for antennas 1 and 3
+    file12 = 'data/Samples_Jul_24/PRN10_copper9.csv(2)'  # data for antennas 1 and 2
+    file13 = 'data/Samples_Jul_24/PRN10_copper9.csv'  # data for antennas 1 and 3
     phase_ch_2 = np.deg2rad(25)  # 25 for copper, 19 for gray
-    prn = 5
+    prn = 32
 
     e, a = calc_corr_AoA(file12, file13, prn, phase_ch_2, lookup_table)
     print("Elevation angle: " + str(e))

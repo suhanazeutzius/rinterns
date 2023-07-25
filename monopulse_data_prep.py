@@ -183,6 +183,7 @@ def prepareDataForMonopulse(file_name, prn, plot_correlation, rx2_offset=0, rx3_
     # Calculate maximum doppler shift
     slant_angle = (np.pi/2)-max_elevation_angle
     fdoppler = np.floor(Vsat * np.cos(slant_angle) * fGPS / c)  # [Hz]
+    fdoppler = 3500
 
     # Perform correlation analysis
     prns = [prn]
