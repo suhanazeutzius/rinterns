@@ -1,3 +1,10 @@
+/**
+ * @file channel.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief Configuration of channel properties (frequency, bandwidth, etc)
+ */
+
 #ifndef _CHANNEL_H_
 #define _CHANNEL_H_
 

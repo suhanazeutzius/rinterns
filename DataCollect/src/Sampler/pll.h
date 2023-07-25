@@ -1,3 +1,10 @@
+/**
+ * @file pll.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief pll state information for debugging
+ */
+
 #ifndef _PLL_H_
 #define _PLL_H_
 

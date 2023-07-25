@@ -1,3 +1,10 @@
+/**
+ * @file trigger.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief Configuration of master & slave device triggers 
+ */
+
 #ifndef _TRIGGER_H_
 #define _TRIGGER_H_
 

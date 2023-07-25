@@ -9,7 +9,7 @@
  * @return int -- returns 0 on success, bladerf error code on failure
  *
  * @brief sets bandwidth, freq, gain, etc.
- **/
+ */
 int channel_init(struct bladerf *dev, struct channel_config ch_config){
 
     int status;
@@ -118,7 +118,7 @@ int channel_init(struct bladerf *dev, struct channel_config ch_config){
  * @return int -- returns 0 on success, bladerf error code on failure
  *
  * @brief enables both modules; should be called after sync config
- **/
+ */
 int channel_enable(struct bladerf *dev){
 
     int status;
@@ -153,7 +153,7 @@ int channel_enable(struct bladerf *dev){
  * @return int -- returns 0 on success, bladerf error code on failure 
  *
  * @brief disables modules; does not mess with bandwidth, freq, etc.
- **/
+ */
 int channel_disable(struct bladerf *dev){
 
     int status;

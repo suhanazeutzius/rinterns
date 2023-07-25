@@ -8,7 +8,7 @@
  * @return returns 0 on success, bladerf error on failure
  *
  * @brief
- **/
+ */
 int pll_state(struct bladerf *dev){
 
     int status;

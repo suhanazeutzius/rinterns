@@ -9,7 +9,7 @@
  *
  * @brief initialize clock reference and clock sharing between master/slave
  * and initialize 10MHz reference
- **/
+ */
 int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
 	int status;
 
@@ -59,7 +59,7 @@ int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
  * @return 0 on success, bladerf error on failure
  *
  * @brief
- **/
+ */
 int clock_vctcxo_state(struct bladerf *dev){
 
     int status;

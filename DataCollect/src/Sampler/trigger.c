@@ -13,7 +13,7 @@
  * @brief initializes AND arms triggers. This should be called AFTER initializing clock, channels, and
  * enabling modules, and called BEFORE initializing streams and recieving streams. 
  * Note that triggers should be disabled before disabling modules or else unwanted triggers may occur
- **/
+ */
 int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct bladerf_trigger *master_trig, struct bladerf_trigger *slave_trig){
 
 	int status;
@@ -68,7 +68,7 @@ int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct b
  *
  * @brief disarms master and slave triggers 
  * Note: should be called PRIOR to disabling modules
- **/
+ */
 int trigger_deinit(struct bladerf *master_dev, struct bladerf *slave_dev, struct bladerf_trigger *master_trig, struct bladerf_trigger *slave_trig){
 
 	int status;
@@ -109,7 +109,7 @@ int trigger_deinit(struct bladerf *master_dev, struct bladerf *slave_dev, struct
  * and sync_rx()) and should be promptly followed by a stream handler
  * Note: timeout of stream should be greater than the latency between stream initialization
  * and this function call
- **/
+ */
 int trigger_fire(struct bladerf *master_dev, struct bladerf_trigger *master_trig){
 
 	int status;
@@ -134,7 +134,7 @@ int trigger_fire(struct bladerf *master_dev, struct bladerf_trigger *master_trig
  * @return NULL on failure, trigger pointer on success
  *
  * @brief unpacks void *arg into device and trigger, fires trigger
- **/ 
+ */ 
 void *trigger_fire_task(void *arg){
 
     if(!arg) return NULL;

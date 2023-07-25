@@ -7,7 +7,7 @@
  * @param struct bladerf *slave_dev -- slave device
  * @param struct stream_config st_config -- stream configuration parameter struct
  * @return int -- returns 0 on success, bladerf error code on failure
- **/
+ */
 int _syncstream_init_config(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config){
 
     int status;
@@ -40,7 +40,7 @@ int _syncstream_init_config(struct bladerf *master_dev, struct bladerf *slave_de
  *
  * @param struct stream_config st_config -- stream configuration parameter struct
  * @return int -- returns 0 on success, bladerf error code on failure
- **/
+ */
 int _syncstream_init_buffers(struct stream_config st_config){
 
     /* check master/slave buffers */
@@ -94,7 +94,7 @@ int _syncstream_init_buffers(struct stream_config st_config){
  * @return void*
  *
  * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
- **/
+ */
 void *syncstream_init_task(void *arg){
 
     if(!arg) return NULL;   // TODO: add return value
@@ -193,7 +193,7 @@ exit_free_memory:
  * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
  * Note: enusre that timeout_ms parameter leaves enough time to cover latency between
  * this call and call to trigger_fire()
- **/
+ */
 int syncstream_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct stream_config st_config){
 
     int status;
@@ -258,7 +258,7 @@ exit_free_memory:
  * @return int -- return 0 on success, bladerf error code on failure
  *
  * @brief recieves from the master and slave buffers and appends to a CSV
- **/
+ */
 int syncstream_handle_csv(struct bladerf *master_dev, struct bladerf *slave_dev, char *filename){
 
     /* check buffers */
@@ -308,7 +308,7 @@ int syncstream_handle_csv(struct bladerf *master_dev, struct bladerf *slave_dev,
  * @return int -- 0 on success, -1 or balderf error code on failure
  *
  * @brief uses master/slave buffers & lengths to separate into 4 channels
- **/
+ */
 int syncstream_handle_buffers(struct bladerf *master_dev, struct bladerf *slave_dev, struct buffers *buffers){
 
     
@@ -378,7 +378,7 @@ int syncstream_handle_buffers(struct bladerf *master_dev, struct bladerf *slave_
  *
  * @brief free buffers, set lengths to 0, set
  * pointers to NULL
- **/
+ */
 void syncstream_free_buffers(void){
     free(master_buffer);
     free(slave_buffer);

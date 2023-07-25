@@ -1,3 +1,10 @@
+/**
+ * @file syncstream.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief Configuration of stream from bladeRF's to computer
+ */
+
 #ifndef _SYNCSTREAM_H_
 #define _SYNCSTREAM_H_
 

@@ -1,3 +1,10 @@
+/**
+ * @file sampler.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief Sampling of 4 channel (2 blades, 2ch per blade)
+ */
+
 #ifndef _SAMPLER_H_
 #define _SAMPLER_H_
 

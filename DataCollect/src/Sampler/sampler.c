@@ -11,7 +11,7 @@
  * @return int -- returns 0 on success, bladerf error code on failure
  *
  * @brief called by sampler and sampler_threaded, this is not intended to be called by user
- **/
+ */
 int _sampler_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct channel_config ch_config){
 
     int status;
@@ -45,7 +45,7 @@ int _sampler_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct 
  *
  * @brief Devices should be opened prior to calling sampler, and ch_config and st_config should
  * be double checked for accuracy
- **/
+ */
 int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channel_config ch_config, struct stream_config st_config){
 
 	int status;
@@ -113,7 +113,7 @@ exit_fail:
  *
  * @brief Devices should be opened prior to calling sampler, and ch_config and st_config should
  * be double checked for accuracy
- **/
+ */
 int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, struct channel_config ch_config, struct stream_config st_config){
 
 	int status;

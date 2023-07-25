@@ -1,3 +1,11 @@
+/**
+ * @file clock.h
+ * @author Nate Golding
+ * @date Jul 2023
+ * @brief Configuration of clock sharing between master
+ * and slave device
+ */
+
 #ifndef _CLOCK_H_
 #define _CLOCK_H_
 
