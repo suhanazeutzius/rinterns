@@ -1,3 +1,5 @@
 *.swp
 *.out
 *.bin
+./DataCollect/src/doxygen/*
+./DataCollect/src/doxygen
