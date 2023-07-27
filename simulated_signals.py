@@ -8,6 +8,7 @@ import scipy.signal
 from flatirons.gps_gen import *
 from flatirons.gps_dsp import *
 from flatirons.parse import *
+from monopulse_data_prep import *
 
 # Import custom matplotlib styling
 plt.style.use('flatirons/flatirons.mplstyle')
@@ -48,3 +49,5 @@ fdoppler = np.floor(Vsat*np.cos(slant_angle)*fGPS/c) # [Hz]
 
 prns = [5,13,20,29]
 _ = correlateSignal(sig, fsample, 'Simulated PRN 13', fdoppler, 10, prns=prns)
+    
+corr1, corr2, corr3, corr4 = prepareDataForMonopulse_sim([5,13,20,29], 5, 48, plot_correlation=True)

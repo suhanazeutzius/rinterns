@@ -14,7 +14,7 @@ gps_file = 'tle-gps.txt'
 
 # Define time
 ts = load.timescale()
-t = ts.utc(2023, 7, 12, 21, 20, 0) # Set a specific time
+t = ts.utc(2023, 7, 24, 19, 52, 0) # Set a specific time
 #t = ts.now()                       # Grab current time
 
 # Display satellites that are currently overhead receiver
@@ -22,10 +22,10 @@ _ = getOverheadSatellites(t, gps_file, 26.2, [+39.58709, -104.82873])
 
 # Define satellite direction estimates
 #   Format: PRN: [azimuth, elevation]
-estimates = {18: [95,11.2], 23: [343, 16.6]}
+estimates = {18: [28,14], 23: [288, 26]}
 
 # Calculate errors
-errors = calcError(t, gps_file, 26.2, [+39.58709, -104.82873], estimates)
+errors = calcErrorSingle(t, gps_file, 26.2, [+39.58709, -104.82873], estimates)
 
 # Display error information
 for prn in errors.keys():
@@ -34,3 +34,7 @@ for prn in errors.keys():
     print(" Elevation Error [deg] : " + str(errors[prn][1]))
     print(" Range Error [km]      : " + str(errors[prn][2]))
     print(" Position Error [km]   : " + str(errors[prn][3]))
+
+# Calculate erros for all data
+results_file = 'results_three_element.csv'
+calcErrorAll(gps_file, results_file, 26.2, [+39.58709, -104.82873])

@@ -41,7 +41,7 @@ def gen_sim_signals(e1, a1, fsample):
         for j in range(len(all_sigs)):
             # Shift signal by doppler shift frequency
             t = np.linspace(0, len(sig) / fsample, num=len(sig), endpoint=False)
-            all_sigs[j] = all_sigs[j] * np.exp(-1j * 2 * np.pi * doppler_shifts[i] * t)
+            all_sigs[j] = all_sigs[j] * np.exp(1j * 2 * np.pi * doppler_shifts[i] * t)
 
         a1_signals.append(all_sigs[0])
         a2_signals.append(all_sigs[1])
@@ -250,13 +250,19 @@ def prepareDataForMonopulse_sim(prn, elevation, azimuth, plot_correlation=False)
     print("The doppler frequency shift for Rx 3 is: " + str(fdoppler3) + " Hz")
     _, fdoppler4 = correlateSignal(sig4, fsample, 'Rx 4', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
     print("The doppler frequency shift for Rx 4 is: " + str(fdoppler4) + " Hz")
-    fdoppler = np.mean([fdoppler1, fdoppler2, fdoppler3, fdoppler4])
+    if None not in [fdoppler1, fdoppler2, fdoppler3, fdoppler4]:
+        fdoppler = np.mean([fdoppler1, fdoppler2, fdoppler3, fdoppler4])
 
-    # Extract correlation data for monopulse algorithm
-    corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
-    corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
-    corr3 = correlateForMonopulse(sig3, fsample, fdoppler, prn, 'Rx 3', plot=False)
-    corr4 = correlateForMonopulse(sig4, fsample, fdoppler, prn, 'Rx 4', plot=False)
+        # Extract correlation data for monopulse algorithm
+        corr1 = correlateForMonopulse(sig1, fsample, fdoppler, prn, 'Rx 1', plot=False)
+        corr2 = correlateForMonopulse(sig2, fsample, fdoppler, prn, 'Rx 2', plot=False)
+        corr3 = correlateForMonopulse(sig3, fsample, fdoppler, prn, 'Rx 3', plot=False)
+        corr4 = correlateForMonopulse(sig4, fsample, fdoppler, prn, 'Rx 4', plot=False)
+    else:
+        corr1 = None
+        corr2 = None
+        corr3 = None
+        corr4 = None
 
     # Return data for monopulse algorithm
     return corr1, corr2, corr3, corr4

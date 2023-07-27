@@ -22,6 +22,7 @@ noise_power_AWGN_dB = 16
 noise_power_AWGN = math.pow(10,(noise_power_AWGN_dB/10))
 sig13_noisy = makeGPSNoisy(sig13, noise_power_AWGN)
 
+# Perform cross-correlation and auto-correlation
 corr_same = scipy.signal.correlate(sig13, sig13_noisy)
 corr_diff = scipy.signal.correlate(sig8, sig13_noisy)
 max_shift = int((len(sig13)+len(sig8)-2)/2)
@@ -36,6 +37,7 @@ ax1.set_xlabel('Shift')
 ax1.legend(['PRN 13', 'PRN 8'])
 ax1.set_ylim([-1000, 5000])
 
+# Perform cross-correlation and auto-correlation for various time shifts
 max_corr = []
 tmp = []
 for i in np.arange(len(sig13_noisy)):

@@ -26,10 +26,10 @@ from flatirons.gps_gen import *
 def correlateWithGPS(prn, signal, signal_name, freq=None, sample_rate=None, plot=False):
     # Generate expected C/A code for provided prn number for both data bits
     ca = makeGPSClean(prn, num_periods=10, sample_rate=sample_rate)
-
+    
     # Perform correlation
     corr = scipy.signal.correlate(ca, signal)
-
+    
     # Create shift vector
     max_shift = int((len(ca)+len(signal)-2)/2)
     shift = np.arange(-max_shift, max_shift+1)
@@ -101,7 +101,7 @@ def filterSignal(fcenter, fsample, signal, filter_type, bandwidth=2e6, order=4):
 # tuneSignal() tunes a signal so the GPS signal band is centered at 0 Hz
 #
 # Inputs:
-#   fcenter_SDR      : center frequency (in Hz) the SDR sampled at           [float]
+#   fshift           : shift frequency of data (in Hz)                       [float]
 #   fsample          : sampling rate (in Hz) of the SDR                      [float]
 #   signal           : signal to tune              [numpy array of type np.complex_]
 #   filter_bandwidth : bandwidth (Hz) for the lowpass filter used for tuning   [int]
@@ -164,7 +164,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
     for i, prn in enumerate(prns):
         # Instantiate matrix to store correlation values
         if plot_3D:
-            N_shifts = (int(fsample/(1.023e6))*1023*2)+len(signal)-1
+            N_shifts = (int(fsample/(1.023e6))*1023*10)+len(signal)-1
             corr_mat = np.zeros((len(freq_range), N_shifts))
         
         # Iterate over all frequencies
@@ -179,7 +179,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
  
             # Save correlation data
             if plot_3D:
-                corr_mat[j,:] = corr
+                corr_mat[j,:] = np.divide(corr, np.median(corr))
             corr_max[i,j] = corr.max()/np.median(corr)
 
         if plot_3D:
@@ -189,9 +189,11 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
                 shifts = np.concatenate(np.arange(-max_shift, 1), np.arange(0, max_shift+1))
             else:
                 shifts = np.arange(-max_shift, max_shift+1)
-            X, Y = np.meshgrid(shifts[::1000], freq_range)
-            fig2, ax2 = plt.subplots(subplot_kw={"projection": "3d"})
-            ax2.plot_surface(X, Y, corr_mat[:,::1000])
+            X, Y = np.meshgrid(shifts, freq_range)
+            #fig2, ax2 = plt.subplots(subplot_kw={"projection": "3d"})
+            #ax2.plot_surface(X, Y, corr_mat)
+            fig2, ax2 = plt.subplots()
+            ax2.imshow(corr_mat, aspect='auto')
             ax2.set_title('PRN = ' + str(prn))
             plt.show()
 
@@ -204,7 +206,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
     else: # Peak is not above threshold12
         print("!! ERROR: No correlation peak above threshold !!")
         # exit()
-        # return None, None # Return None
+        return None, None # Return None
 
     if plot_CAF:
         # Finish up plotting
@@ -215,8 +217,8 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
         ax1.grid(True)
         ax1.legend()
         ax1.set_xlabel('Doppler Frequency Shift')
-        ax1.set_ylabel('Max/Median Ratio')
-        fig1.suptitle('Max/Median Ratio  Versus Doppler Frequency Shift For Selected PRNs')
+        ax1.set_ylabel('Max/Median Ratio (MMR)')
+        fig1.suptitle('Max/Median Ratio Versus Doppler Frequency Shift For Selected PRNs')
         plt.show()
 
     # Return results
@@ -228,7 +230,7 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
 # Inputs:
 #   sig                 : GPS signal                  [numpy array of type complex_]
 #   fsample             : sampling rate in Hz                                [float]
-#   fdoppler_correction : doppler frequency shift of the signal in Hz        [float]
+#   fdoppler            : doppler frequency shift of the signal in Hz        [float]
 #   prn                 : PRN that is being tracked                            [int]
 #   signal_name         : name of the signal                                [string]
 #   plot                : parameter controlling whether to display             [T/F]
