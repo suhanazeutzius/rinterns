@@ -89,6 +89,9 @@ int sampler(struct bladerf *master_dev, struct bladerf *slave_dev, struct channe
         if(status != 0) return status;
     }
 
+    /* deinit clocks */
+    clock_deinit(master_dev, slave_dev);
+
     /* return 0 on success */
 
 	return 0;
@@ -127,19 +130,28 @@ int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, stru
     status = trigger_init(master_dev, slave_dev, &master_trig, &slave_trig);
     if(status != 0) return status;
 
-    /* start init syncstream*/
-    pthread_t syncstream_thread;
-    struct syncstream_task_arg syncstream_arg = {st_config, master_dev, slave_dev};    
+    /* create thread params */
+    pthread_t syncstream_thread, trigger_thread;
+
+    /* start threads */
+    struct syncstream_task_arg syncstream_arg = {st_config, master_dev, slave_dev, -1};
     pthread_create(&syncstream_thread, NULL, syncstream_init_task, &syncstream_arg);
 
-    /* start fire trigger task */
-    pthread_t trigger_thread;
-    struct trigger_task_arg trigger_arg = {master_dev, &master_trig};
+    struct trigger_task_arg trigger_arg = {master_dev, &master_trig, -1};
     pthread_create(&trigger_thread, NULL, trigger_fire_task, &trigger_arg);
 
     /* join threads */
-    pthread_join(trigger_thread, NULL);     // TODO add returns to threads for error
-    pthread_join(syncstream_thread, NULL);  // TODO add returns to threads for error
+    pthread_join(trigger_thread, NULL);
+    pthread_join(syncstream_thread, NULL);
+
+    if(syncstream_arg.status != 0){
+        fprintf(stderr, "Syncstream init task returned %d", syncstream_arg.status);
+        return syncstream_arg.status;
+    }
+    if(trigger_arg.status != 0){
+        fprintf(stderr, "Trigger fire task returned %d", trigger_arg.status);
+        return trigger_arg.status;
+    }
 
     /* handle syncstream */
     status = syncstream_handle_csv(master_dev, slave_dev, "sample.csv");
@@ -159,6 +171,9 @@ int sampler_threaded(struct bladerf *master_dev, struct bladerf *slave_dev, stru
         status = channel_disable(slave_dev);
         if(status != 0) return status;
     }
+
+    /* deinit clocks */
+    clock_deinit(master_dev, slave_dev);
 
     /* return 0 on success */
 	return 0;

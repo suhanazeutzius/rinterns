@@ -11,6 +11,7 @@
 #include <libbladeRF.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 #include "clock.h"
 #include "channel.h"
 #include "trigger.h"

@@ -14,6 +14,7 @@
 struct trigger_task_arg{
     struct bladerf *dev;
     struct bladerf_trigger *trig;
+    int status;
 };
 
 int trigger_init(struct bladerf *master_dev, struct bladerf *slave_dev, struct bladerf_trigger *master_trig, struct bladerf_trigger *slave_trig);

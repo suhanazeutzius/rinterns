@@ -13,6 +13,7 @@
 #include <stdio.h>
 
 int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev);
+int clock_deinit(struct bladerf *master_dev, struct bladerf *slave_dev);
 int clock_vctcxo_state(struct bladerf *dev);
 
 #endif

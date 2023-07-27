@@ -140,16 +140,19 @@ void *trigger_fire_task(void *arg){
     if(!arg) return NULL;
 
     /* unpack arguments */
-    struct bladerf *dev = ((struct trigger_task_arg*)arg)->dev;
-    struct bladerf_trigger *trig = ((struct trigger_task_arg*)arg)->trig;
+    struct trigger_task_arg* args = (struct trigger_task_arg*)arg;
+    struct bladerf *dev = args->dev;
+    struct bladerf_trigger *trig = args->trig;
 
     int status;
 
     status = bladerf_trigger_fire(dev, trig);
     if(status != 0){
         fprintf(stderr, "Failed to fire master trigger: %s\n", bladerf_strerror(status));
-        return NULL;    // TODO add return values
+        args->status = status;
+        return NULL;
     }
 
-    return NULL;        // TODO add return values
+    args->status = 0;
+    return NULL;
 }

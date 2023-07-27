@@ -53,6 +53,47 @@ int clock_init(struct bladerf *master_dev, struct bladerf *slave_dev){
 
 
 /**
+ * de-init clock sharing
+ *
+ * @param struct bladerf *master_dev -- master device
+ * @param struct bladerf *slave_dev -- slave device
+ * @return int -- return 0 on success, bladerf error code on failure
+ *
+ * @brief Returns both devices to onboard devices & disables output
+ * clocks
+ */
+int clock_deinit(struct bladerf *master_dev, struct bladerf *slave_dev){
+
+    int status;
+
+    /* set onboard reference for both devices */
+
+        status = bladerf_set_clock_select(slave_dev, CLOCK_SELECT_ONBOARD);
+    if(status != 0){
+        fprintf(stderr, "Failed to set onboard reference on slave: %s\n", bladerf_strerror(status));
+    }
+
+
+    /* disable clock output for both devices */
+
+    status = bladerf_set_clock_output(slave_dev, false);
+    if(status != 0){
+        fprintf(stderr, "Failed to disable output clock on slave: %s\n", bladerf_strerror(status));
+    }
+
+    status = bladerf_set_clock_output(master_dev, false);
+    if(status != 0){
+        fprintf(stderr, "Failed to disable ouput clock on master: %s\n", bladerf_strerror(status));
+    }
+
+    return 0;
+}
+
+
+
+
+
+/**
  * Get vctcxo trim state
  *
  * @param struct bladerf *dev -- device to check

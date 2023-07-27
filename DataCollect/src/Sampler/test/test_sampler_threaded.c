@@ -10,13 +10,13 @@ int main(){
     struct channel_config ch_config;
     ch_config.gainmode = BLADERF_GAIN_SLOWATTACK_AGC;
     ch_config.gain = 0;
-    ch_config.samplerate = 2048000;
+    ch_config.samplerate = 2046000;
     ch_config.frequency = 1575420000;
     ch_config.bandwidth = 18000000;
-    ch_config.biastee = true;
+    ch_config.biastee = false;
 
     struct stream_config st_config;
-    st_config.num_samples = 20480;
+    st_config.num_samples = 204600;
     st_config.num_buffers = 16;
     st_config.buffer_size = 2048;
     st_config.num_transfers = 8;

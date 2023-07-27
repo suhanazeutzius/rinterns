@@ -14,7 +14,7 @@ int _syncstream_init_config(struct bladerf *master_dev, struct bladerf *slave_de
 
     /* configure sync stream (master) */
 
-    status = bladerf_sync_config(master_dev, BLADERF_RX_X1, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
+    status = bladerf_sync_config(master_dev, BLADERF_RX_X2, BLADERF_FORMAT_SC16_Q11, st_config.num_buffers, st_config.buffer_size, st_config.num_transfers, st_config.timeout_ms);
     if(status != 0){
         fprintf(stderr, "Failed to configure master stream: %s\n", bladerf_strerror(status));
         return status;
@@ -59,14 +59,14 @@ int _syncstream_init_buffers(struct stream_config st_config){
     }
 
     /* allocate master/slave buffers */
-    const unsigned int buf_size = st_config.num_samples * 2 * 2 * sizeof(int16_t);
+    const unsigned int buf_size = st_config.num_samples * 4 * sizeof(int16_t);
 
     master_buffer = (int16_t*)malloc(buf_size);
     if(!master_buffer){
         fprintf(stderr, "Failed to allocate master buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
-    master_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
+    master_buffer_len = 0;
 
     slave_buffer = (int16_t*)malloc(buf_size);
     if(!slave_buffer){
@@ -78,7 +78,7 @@ int _syncstream_init_buffers(struct stream_config st_config){
         fprintf(stderr, "Failed to allocate slave buffer: %s\n", bladerf_strerror(BLADERF_ERR_MEM));
         return BLADERF_ERR_MEM;
     }
-    slave_buffer_len = (unsigned int)(buf_size / sizeof(int16_t));
+    slave_buffer_len = 0;
 
     return 0;
 }
@@ -93,7 +93,10 @@ int _syncstream_init_buffers(struct stream_config st_config){
  * @param void *arg -- interpreted as pointer to synstream_task_arg struct
  * @return void*
  *
- * @brief calls bladerf_sync_config() and bladerf_sync_rx() using st_config parameters
+ * @brief initializes collection buffers, syncstream configuration, enables RFIC
+ * transfering, then begins filling buffers (of size determined by buffer_size in
+ * stream_config), transfering those to the collection buffers until the collection
+ * buffers have reached num_samples size
  */
 void *syncstream_init_task(void *arg){
 
@@ -110,11 +113,18 @@ void *syncstream_init_task(void *arg){
     /* config sync streams */
 
     status = _syncstream_init_config(master_dev, slave_dev, st_config);
-    if(status != 0) return NULL;   // TODO: add return value
+    if(status != 0){
+        args->status = status;
+        return NULL;
+    }
 
     /* configure buffers */
+
     status = _syncstream_init_buffers(st_config);
-    if(status != 0) return NULL;   // TODO: add return value
+    if(status != 0){
+        args->status = status;
+        return NULL;
+    }
 
     /* enable RF front ends */
 
@@ -125,38 +135,59 @@ void *syncstream_init_task(void *arg){
     if(status != 0) goto exit_free_memory;
 
     /* allocate master block and slave block buffers */
-    int16_t *master_samples = (int16_t*)malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+
+    int16_t *master_samples = (int16_t*)malloc(st_config.buffer_size * 4 * sizeof(int16_t));
     if(!master_samples){
-        fprintf(stderr, "Failed to allcoate master block: %s\n", BLADERF_ERR_MEM);
+        fprintf(stderr, "Failed to allocate master block: %s\n", BLADERF_ERR_MEM);
         goto exit_free_memory;
     }
 
-    int16_t *slave_samples = (int16_t*)malloc(st_config.buffer_size * sizeof(uint16_t) * 2);
+    int16_t *slave_samples = (int16_t*)malloc(st_config.buffer_size * 4 * sizeof(int16_t));
     if(!slave_samples){
         fprintf(stderr, "Failed to allocate slave block: %s\n", BLADERF_ERR_MEM);
         goto exit_free_memory;
     }
 
-    unsigned int master_samples_read = 0, slave_samples_read = 0;
-
     /* continue read until all samples are filled */
-    while(status == 0 && (master_samples_read < st_config.num_samples)){
+
+    while(master_buffer_len < st_config.num_samples && slave_buffer_len < st_config.num_samples){
         int mstatus = bladerf_sync_rx(master_dev, master_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
         int sstatus = bladerf_sync_rx(slave_dev, slave_samples, st_config.buffer_size, NULL, st_config.timeout_ms);
 
+        /* get num samples to write */
+        unsigned int to_write_master = st_config.buffer_size < (st_config.num_samples - master_buffer_len) ? st_config.buffer_size : (st_config.num_samples - master_buffer_len);
+        unsigned int to_write_slave = st_config.buffer_size < (st_config.num_samples - slave_buffer_len) ? st_config.buffer_size : (st_config.num_samples - slave_buffer_len);
+
+        /* check rx status */
         if(mstatus != 0 && sstatus != 0){
-            //TODO
+            if(master_samples) free(master_samples);
+            if(slave_samples) free(slave_samples);
+            goto exit_free_memory;
         }
         else{
-            /* get num samples to write */
-            size_t to_write_master = st_config.buffer_size < (st_config.num_samples - master_samples_read) ? st_config.buffer_size : (st_config.num_samples - master_samples_read);
-            size_t to_write_slave = st_config.buffer_size < (st_config.num_samples - slave_samples_read) ? st_config.buffer_size : (st_config.num_samples - slave_samples_read);
+
+            /************DEBUG***********/
+            int16_t mzeros = 0, szeros = 0;
+            for(unsigned int i = 0, j = 0; i < to_write_master, j < to_write_slave; i++, j++){
+                mzeros |= master_samples[i];
+                szeros |= slave_samples[j];
+            }
+
+            if(!mzeros){
+                printf("Master recieved 0 block: %d\n", master_buffer_len);
+                continue;
+            }
+            if(!szeros){
+                printf("Slave recieved 0 block: %d\n", slave_buffer_len);
+                continue;
+            }
 
             /* write samples to buffer */
-            //TODO
+            memcpy(&(master_buffer[master_buffer_len]), master_samples, to_write_master*2*sizeof(int16_t));
+            master_buffer_len += to_write_master;
+            memcpy(&(slave_buffer[slave_buffer_len]), slave_samples, to_write_slave*2*sizeof(int16_t));
+            slave_buffer_len += to_write_slave;
         }
-        master_samples_read += st_config.buffer_size;
-        slave_samples_read += st_config.buffer_size; 
     }
 
     /* free block buffers */
@@ -165,7 +196,8 @@ void *syncstream_init_task(void *arg){
 
     /* return 0 on success */
 
-    return 0;
+    args->status = 0;
+    return NULL;
 
 exit_free_memory:
 	free(slave_buffer);
@@ -175,7 +207,8 @@ exit_free_memory:
 	free(master_buffer);
 	master_buffer = NULL;
 	master_buffer_len = 0;
-	return NULL;   // TODO: add return value
+	args->status = status;
+    return NULL;
 }
 
 
