@@ -126,6 +126,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 #   signal_name         : signal name (for plotting)                        [string]
 #   fdoppler            : maximum possible doppler shift in Hz               [float]
 #   freq_step           : frequency step size for correlation algorithm (Hz) [float]
+#   tracked_prn         : desired prn to color                                 [int]
 #   prns                : prns to test in correlation algorithm   [list of type int]
 #   freq_range          : optional argument to overwrite range  [list of type float]
 #                         of frequencies to test (Hz)
@@ -136,7 +137,7 @@ def tuneSignal(fshift, fsample, signal, filter_bandwidth=0.5e6):
 #   prn                 : prn of signal with maximum correlation peak          [int]
 #   fdoppler_correction : doppler frequency shift of signal with maximum     [float]
 #                         correlation peak
-def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=range(1,32), freq_range=None, plot_CAF=True, plot_each=False, plot_3D=False):
+def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, tracked_prn, prns=range(1,32), freq_range=None, plot_CAF=True, plot_each=False, plot_3D=False):
     # Define constants
     c = 299792458 # [m/s]
     fGPS = 1575.42e6 # [Hz]
@@ -201,7 +202,10 @@ def correlateSignal(signal, fsample, signal_name, fdoppler, freq_step, prns=rang
         # Finish up plotting
         fig1, ax1 = plt.subplots(figsize=(8, 5))
         for i in np.arange(corr_max.shape[0]):
-            ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]))
+            if prns[i] == tracked_prn:
+                ax1.plot(freq_range, corr_max[i,:], '.--', label=str(prns[i]), color='#774D77')
+            else:
+                ax1.plot(freq_range, corr_max[i,:], '.--', color='#A9A9A9')
         ax1.set_yscale('log')
         ax1.grid(True)
         ax1.legend()

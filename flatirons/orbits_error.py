@@ -38,7 +38,7 @@ def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug, sh
     receiver = wgs84.latlon(receiver_latlon[0], receiver_latlon[1])
 
     # Iterate over all satellites
-    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'}, figsize=(4, 4))
     for prn in range(33):
         if prn in prn_dict.keys():
             # Extract satellite object corresponding to current prn
@@ -65,11 +65,11 @@ def getOverheadSatellites(t, tle_file, field_of_view, receiver_latlon, debug, sh
 
     # Make plot look nice
     ax.set_yticklabels([])
-    ax.set_xticklabels(['N','45°','E','135°','S','225°','W','315°'])
+    ax.set_xticklabels(['N','45°','E','135°','S','225°','W','315°'], fontsize=12)
     ax.set_theta_zero_location('N')
     ax.set_theta_direction(-1)
     ax.set_rmax(90)
-    ax.set_title('Overhead Satellites')
+    ax.set_title('Overhead Satellites', fontsize=13)
     fig.savefig('overhead_satellites.png')
     #if show_plot:
     #plt.show()

@@ -18,9 +18,10 @@ plt.style.use('flatirons/flatirons.mplstyle')
 #   file_name        : name of the data file                                     [string]
 #   prn              : PRN that is being tracked                                    [int]
 #   wire_delay       : delay caused by a longer second wire (seconds)             [float]
+#   tracked_prn      : desired prn to make colorful                                 [int]
 #   plot_correlation : option controlling whether to plot the correlation data      [T/F]
-#   plot_all        : option controlling if all PRNs are plotted                   [T/F]
-def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_all):
+#   plot_all         : option controlling if all PRNs are plotted                   [T/F]
+def prepareDataForMonopulse(file_name, prn, wire_delay, tracked_prn, plot_correlation, plot_all):
     # Define frequencies
     fcenter_SDR = 1575.42e6 # [Hz]
     fsample = 2.046e6 # [Hz]
@@ -60,14 +61,15 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_a
     
     # Perform correlation analysis
     if plot_all == True:    
-        prns = list(range(1,33))
-        prns.append(prn)
-        prns = [*set(prns)]
+        prns = [1, 2, 3, 4, 5, 8, 9, 12, 13, 25, 26, 17, 18, 19, 21, 22]
+        #prns = prns.remove(11)
+        #prns.append(prn)
+        #prns = [*set(prns)]
         print(prns)
-        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, tracked_prn, prns=prns, plot_CAF=plot_correlation)
         #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
         print("loading...")
-        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, tracked_prn, prns=prns, plot_CAF=plot_correlation)
         #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
         fdoppler = np.mean([fdoppler1, fdoppler2])
  
@@ -78,10 +80,10 @@ def prepareDataForMonopulse(file_name, prn, wire_delay, plot_correlation, plot_a
 
     else:
         prns = [prn]
-        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        _, fdoppler1 = correlateSignal(sig1, fsample, 'Rx 1', fdoppler, 10, tracked_prn, prns=prns, plot_CAF=plot_correlation)
         #print("The doppler frequency shift for Rx 1 is: " + str(fdoppler1) + " Hz")
         print("loading...")
-        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, prns=prns, plot_CAF=plot_correlation)
+        _, fdoppler2 = correlateSignal(sig2, fsample, 'Rx 2', fdoppler, 10, tracked_prn, prns=prns, plot_CAF=plot_correlation)
         #print("The doppler frequency shift for Rx 2 is: " + str(fdoppler2) + " Hz")
         fdoppler = np.mean([fdoppler1, fdoppler2])
         
@@ -96,7 +98,7 @@ if __name__ == "__main__":
     # Define data properties
     #global prn
     file_name = 'data/Samples_Jul_6/sat12_1009.csv'
-    prn = 12
+    #prn = 5
     plot_correlation = True
     wire_delay = 7.13e-9
     
